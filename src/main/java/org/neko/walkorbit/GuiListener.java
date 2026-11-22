@@ -45,7 +45,27 @@ public class GuiListener implements Listener {
 
         String action = pdc.get(GuiManager.actionKey(plugin), PersistentDataType.STRING);
         if (action == null) return;
+
+        if (action.startsWith(GuiManager.ACTION_STYLE_PREFIX)) {
+            String name = action.substring(GuiManager.ACTION_STYLE_PREFIX.length());
+            if (name.equals(GuiManager.STYLE_DEFAULT)) {
+                plugin.setWalkStyle(player, null);
+                player.sendMessage(lm.getString("command.style_reset", player));
+            } else {
+                try {
+                    plugin.setWalkStyle(player, WalkShape.Style.valueOf(name));
+                    player.sendMessage(lm.getString("command.style_set", player, Map.of("style", meta.getDisplayName())));
+                } catch (IllegalArgumentException ignored) {
+                    return;
+                }
+            }
+            GuiManager.openStyle(player, plugin); // refresh the highlight
+            return;
+        }
+
         switch (action) {
+            case GuiManager.ACTION_STYLE_MENU -> GuiManager.openStyle(player, plugin);
+            case GuiManager.ACTION_BACK -> GuiManager.openMain(player, plugin, 0);
             case GuiManager.ACTION_PREV -> GuiManager.openMain(player, plugin, holder.page() - 1);
             case GuiManager.ACTION_NEXT -> GuiManager.openMain(player, plugin, holder.page() + 1);
             case GuiManager.ACTION_LANG -> GuiManager.openLanguage(player, plugin);

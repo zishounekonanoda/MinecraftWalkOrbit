@@ -22,6 +22,14 @@ public record OrbitGroup(String name, Material icon, ChatColor color,
 
     private static final Material DEFAULT_ICON = Material.GLOWSTONE_DUST;
 
+    /**
+     * The walk shape to use for a player's own style choice. The configured shape is kept when the
+     * player picked the same style (or none); another style uses that style's preset sizes.
+     */
+    public WalkShape walkShapeFor(WalkShape.Style chosen) {
+        return chosen == null || chosen == walkShape.style() ? walkShape : chosen.preset();
+    }
+
     public static Map<String, OrbitGroup> loadAll(FileConfiguration config, Logger logger) {
         WalkShape walkBase = WalkShape.load(config.getConfigurationSection("walk_shape"), WalkShape.DEFAULT, "walk_shape", logger);
         IdleShape idleBase = IdleShape.load(config.getConfigurationSection("idle_shape"), IdleShape.DEFAULT, "idle_shape", logger);

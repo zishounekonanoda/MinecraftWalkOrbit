@@ -5,7 +5,7 @@ import org.bukkit.inventory.InventoryHolder;
 
 /** Identifies this plugin's menus and remembers which page is open. */
 public final class MenuHolder implements InventoryHolder {
-    public enum Type { MAIN, LANGUAGE }
+    public enum Type { MAIN, LANGUAGE, STYLE }
 
     private final Type type;
     private final int page;

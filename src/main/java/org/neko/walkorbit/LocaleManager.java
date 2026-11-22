@@ -36,7 +36,15 @@ public class LocaleManager {
         if (!langFile.exists()) {
             plugin.saveResource("messages_" + lang + ".yml", false);
         }
-        loadedLocales.put(lang, YamlConfiguration.loadConfiguration(langFile));
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(langFile);
+        // Keys added in newer versions fall back to the copy bundled in the jar,
+        // so an older messages file on the server never shows "Missing translation key".
+        var bundled = plugin.getResource("messages_" + lang + ".yml");
+        if (bundled != null) {
+            cfg.setDefaults(YamlConfiguration.loadConfiguration(
+                    new java.io.InputStreamReader(bundled, java.nio.charset.StandardCharsets.UTF_8)));
+        }
+        loadedLocales.put(lang, cfg);
     }
 
     public void reloadLocales() {

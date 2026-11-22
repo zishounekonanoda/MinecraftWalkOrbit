@@ -63,9 +63,10 @@ public class OrbitTask extends BukkitRunnable {
             }
 
             if (moved) {
-                if (!group.walk().isEmpty() && tick % group.walkShape().interval() == 0) {
+                WalkShape shape = group.walkShapeFor(plugin.getWalkStyle(p));
+                if (!group.walk().isEmpty() && tick % shape.interval() == 0) {
                     WalkShape.Pose now = new WalkShape.Pose(loc.getX(), loc.getY(), loc.getZ(), p.getBodyYaw());
-                    group.walkShape().draw(world, m.lastWalk, now, p.isSneaking(), group.walk());
+                    shape.draw(world, m.lastWalk, now, p.isSneaking(), group.walk());
                     m.lastWalk = now;
                 }
             } else {

@@ -27,6 +27,11 @@ public final class GuiManager {
     static final String ACTION_REMOVE = "remove";
     static final String ACTION_LANG_EN = "lang_en";
     static final String ACTION_LANG_JA = "lang_ja";
+    static final String ACTION_STYLE_MENU = "style_menu";
+    static final String ACTION_BACK = "back";
+    /** Followed by a {@link WalkShape.Style} name, or "DEFAULT" to go back to the server's style. */
+    static final String ACTION_STYLE_PREFIX = "style:";
+    static final String STYLE_DEFAULT = "DEFAULT";
 
     private GuiManager() {
     }
@@ -58,6 +63,8 @@ public final class GuiManager {
         }
 
         if (page > 0) inv.setItem(45, actionItem(plugin, Material.ARROW, lm.getString("gui.item.nav.prev", player), ACTION_PREV));
+        inv.setItem(47, actionItem(plugin, Material.COMPARATOR, lm.getString("gui.item.style.name", player), ACTION_STYLE_MENU,
+                List.of(lm.getString("gui.item.style.lore", player))));
         inv.setItem(48, actionItem(plugin, Material.PLAYER_HEAD, lm.getString("gui.item.lang.name", player), ACTION_LANG));
         inv.setItem(49, actionItem(plugin, Material.BARRIER, lm.getString("gui.item.remove_trail.name", player), ACTION_REMOVE));
         if (end < groups.size()) inv.setItem(53, actionItem(plugin, Material.ARROW, lm.getString("gui.item.nav.next", player), ACTION_NEXT));
@@ -75,11 +82,66 @@ public final class GuiManager {
         player.openInventory(inv);
     }
 
+    /** Lets each player choose how their walk particles are laid out. */
+    public static void openStyle(Player player, WalkOrbit plugin) {
+        LocaleManager lm = plugin.getLocaleManager();
+        MenuHolder holder = new MenuHolder(MenuHolder.Type.STYLE, 0);
+        Inventory inv = Bukkit.createInventory(holder, 9, lm.getString("gui.title.style", player));
+        holder.setInventory(inv);
+
+        WalkShape.Style current = plugin.getWalkStyle(player);
+        String selected = lm.getString("gui.item.style.selected", player);
+
+        Object[][] options = {
+                {2, WalkShape.Style.SIDES, Material.FEATHER},
+                {3, WalkShape.Style.BACK, Material.LEATHER_CHESTPLATE},
+                {4, WalkShape.Style.BACK_SUBTLE, Material.STRING},
+                {5, WalkShape.Style.FEET, Material.LEATHER_BOOTS},
+        };
+        for (Object[] o : options) {
+            WalkShape.Style style = (WalkShape.Style) o[1];
+            // ".lore" can't be a child of the name key: Bukkit YAML reads dots in keys as nesting
+            String id = style.name().toLowerCase(java.util.Locale.ROOT);
+            String key = "gui.item.style." + id;
+            List<String> lore = new ArrayList<>();
+            lore.add(lm.getString("gui.item.style_desc." + id, player));
+            if (style == current) lore.add(selected);
+            ItemStack item = actionItem(plugin, (Material) o[2], lm.getString(key, player),
+                    ACTION_STYLE_PREFIX + style.name(), lore);
+            if (style == current) glow(item);
+            inv.setItem((int) o[0], item);
+        }
+
+        List<String> defLore = new ArrayList<>();
+        defLore.add(lm.getString("gui.item.style_desc.default", player));
+        if (current == null) defLore.add(selected);
+        ItemStack def = actionItem(plugin, Material.BOOK, lm.getString("gui.item.style.default", player),
+                ACTION_STYLE_PREFIX + STYLE_DEFAULT, defLore);
+        if (current == null) glow(def);
+        inv.setItem(7, def);
+
+        inv.setItem(0, actionItem(plugin, Material.ARROW, lm.getString("gui.item.back", player), ACTION_BACK));
+        player.openInventory(inv);
+    }
+
+    private static void glow(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        meta.setEnchantmentGlintOverride(true);
+        item.setItemMeta(meta);
+    }
+
     private static ItemStack actionItem(WalkOrbit plugin, Material material, String name, String action) {
+        return actionItem(plugin, material, name, action, null);
+    }
+
+    private static ItemStack actionItem(WalkOrbit plugin, Material material, String name, String action, List<String> lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(name);
+            if (lore != null) meta.setLore(lore);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.values());
             meta.getPersistentDataContainer().set(actionKey(plugin), PersistentDataType.STRING, action);
             item.setItemMeta(meta);
         }

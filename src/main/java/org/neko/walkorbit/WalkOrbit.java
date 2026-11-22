@@ -14,10 +14,12 @@ public final class WalkOrbit extends JavaPlugin {
     private OrbitTask orbitTask;
     private Map<String, OrbitGroup> groups = Collections.emptyMap();
     private NamespacedKey selectedKey;
+    private NamespacedKey styleKey;
 
     @Override
     public void onEnable() {
         selectedKey = new NamespacedKey(this, "selected");
+        styleKey = new NamespacedKey(this, "walk_style");
         localeManager = new LocaleManager(this);
 
         saveDefaultConfig();
@@ -84,6 +86,25 @@ public final class WalkOrbit extends JavaPlugin {
             p.getPersistentDataContainer().remove(selectedKey);
         } else {
             p.getPersistentDataContainer().set(selectedKey, PersistentDataType.STRING, group);
+        }
+    }
+
+    /** The player's own walk style choice, or null to use the server's (config) style. */
+    public WalkShape.Style getWalkStyle(Player p) {
+        String s = p.getPersistentDataContainer().get(styleKey, PersistentDataType.STRING);
+        if (s == null) return null;
+        try {
+            return WalkShape.Style.valueOf(s);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public void setWalkStyle(Player p, WalkShape.Style style) {
+        if (style == null) {
+            p.getPersistentDataContainer().remove(styleKey);
+        } else {
+            p.getPersistentDataContainer().set(styleKey, PersistentDataType.STRING, style.name());
         }
     }
 }
