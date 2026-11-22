@@ -13,9 +13,9 @@ import java.util.logging.Logger;
  * continuous streak instead of separate afterimages.
  */
 public record WalkShape(int interval, double lineTop, double lineBottom, double sideOffset, double backOffset,
-                        int points, double spread, double step, double sneakDrop) {
+                        int points, double spread, double flare, double step, double sneakDrop) {
 
-    public static final WalkShape DEFAULT = new WalkShape(2, 1.5, 0.45, 0.42, 0.15, 5, 0.07, 0.3, 0.25);
+    public static final WalkShape DEFAULT = new WalkShape(2, 1.5, 0.45, 0.6, 0.15, 5, 0.15, 0.35, 0.3, 0.25);
 
     /** Beyond this distance between emissions it is a teleport, not walking: don't draw a streak across it. */
     private static final double MAX_SWEEP = 2.0;
@@ -33,6 +33,7 @@ public record WalkShape(int interval, double lineTop, double lineBottom, double 
                 num(sec, "back_offset", base.backOffset, context, logger),
                 Math.max(1, (int) num(sec, "points", base.points, context, logger)),
                 Math.max(0, num(sec, "spread", base.spread, context, logger)),
+                Math.max(0, num(sec, "flare", base.flare, context, logger)),
                 Math.max(0.02, num(sec, "step", base.step, context, logger)),
                 num(sec, "sneak_drop", base.sneakDrop, context, logger));
     }
@@ -74,12 +75,19 @@ public record WalkShape(int interval, double lineTop, double lineBottom, double 
             double sx = cx + rx * sideOffset * side;
             double sz = cz + rz * sideOffset * side;
             for (int j = 0; j < points; j++) {
-                double t = points == 1 ? 0.5 : (double) j / (points - 1);
+                // one point per vertical slot, at a random height inside it, so points never line up in a grid
+                double t = (j + rnd.nextDouble()) / points;     // 0 = bottom, 1 = top
                 double py = bottom + (top - bottom) * t;
-                // horizontal scatter so the band isn't a perfectly straight line
-                double jx = spread == 0 ? 0 : rnd.nextDouble(-spread, spread);
-                double jz = spread == 0 ? 0 : rnd.nextDouble(-spread, spread);
-                for (ParticleEffect e : effects) e.spawn(world, sx + jx, py, sz + jz);
+                double depth = 1 - t;                            // 0 at the top, 1 at the bottom
+                // flare: pushed outward (away from the body), more the lower it is -> a band that fans out
+                double out = flare * depth * rnd.nextDouble();
+                // spread: random scatter in every horizontal direction, also growing toward the bottom
+                double r = spread * (0.4 + 0.6 * depth);
+                double jx = r == 0 ? 0 : rnd.nextDouble(-r, r);
+                double jz = r == 0 ? 0 : rnd.nextDouble(-r, r);
+                double px = sx + rx * out * side + jx;
+                double pz = sz + rz * out * side + jz;
+                for (ParticleEffect e : effects) e.spawn(world, px, py, pz);
             }
         }
     }

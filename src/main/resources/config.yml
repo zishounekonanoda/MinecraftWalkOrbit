@@ -32,10 +32,11 @@ walk_shape:
   interval: 2        # ticks between emissions while moving
   line_top: 1.5      # top of each band, above the feet
   line_bottom: 0.45  # bottom of each band, above the feet
-  side_offset: 0.42  # distance to the left/right of the body centre
+  side_offset: 0.6   # distance to the left/right of the body centre
   back_offset: 0.15  # how far behind the body centre
   points: 5          # particles per band (top to bottom)
-  spread: 0.07       # random horizontal scatter of each particle
+  spread: 0.15       # random horizontal scatter (grows toward the bottom)
+  flare: 0.35        # extra outward push at the bottom, so each band fans out downward
   step: 0.3          # fill the path walked since the last emission every this many blocks
   sneak_drop: 0.25   # lower the bands by this much while sneaking
 
