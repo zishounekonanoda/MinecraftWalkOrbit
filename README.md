@@ -47,6 +47,10 @@ Apex Legends 風の「軌道」を、エリトラではなく**歩行**で表示
 | `FALLING_DUST` / `BLOCK` / `BLOCK_CRUMBLE` / `DUST_PILLAR` | `block`（ブロック名） |
 | `ITEM` | `item`（アイテム名） |
 | `SCULK_CHARGE` / `DRAGON_BREATH` | `value`（数値） |
+| `TRAIL` | `color`、`duration`（表示する tick 数）、`fall`（その間に下へ垂れる距離） |
+| `NOTE` | `note`（`random` で毎回ちがう音程・色、0〜24 で固定） |
+
+`TRAIL` は1つの点が `duration` の間ずっと残るので、少ない点の数でも途切れない線になります。同梱の軌道の多くは、主役の色付きの粒に `TRAIL` を使っています。
 
 ### 同梱の軌道（24種）
 - ランク系: PREDATOR、MASTER、DIAMOND、GOLD

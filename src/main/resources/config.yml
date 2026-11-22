@@ -21,19 +21,22 @@
 #     EFFECT, INSTANT_EFFECT       color: "#RRGGBB"  value: 1.0 (power)
 #     FALLING_DUST, BLOCK, BLOCK_CRUMBLE, DUST_PILLAR, BLOCK_MARKER   block: <block name>
 #     ITEM                         item: <item name>
+#     TRAIL   color: "#RRGGBB"  duration: 30 (ticks it stays visible)  fall: 0.3 (blocks it slides down meanwhile)
+#             -> long-lived, so far fewer points are needed for an unbroken line
+#     NOTE    note: random (a different colour each time) or 0-24 (fixed pitch/colour)
 #     SCULK_CHARGE, DRAGON_BREATH  value: <number>
 #   (The older "redstone: { color, size }" block is still accepted.)
 # ===============================================================
 
 walk_shape:
-  interval: 1        # ticks between emissions while moving
+  interval: 2        # ticks between emissions while moving
   line_top: 1.5      # top of each band, above the feet
   line_bottom: 0.45  # bottom of each band, above the feet
   side_offset: 0.42  # distance to the left/right of the body centre
   back_offset: 0.15  # how far behind the body centre
-  points: 8          # particles per band (top to bottom)
+  points: 5          # particles per band (top to bottom)
   spread: 0.07       # random horizontal scatter of each particle
-  step: 0.12         # fill the path walked since the last emission every this many blocks
+  step: 0.3          # fill the path walked since the last emission every this many blocks
   sneak_drop: 0.25   # lower the bands by this much while sneaking
 
 idle_shape:
@@ -45,7 +48,7 @@ idle_shape:
   strands: 3         # number of drops circling at once
   rotate_speed: 18   # degrees per tick
   fall_speed: 0.04   # blocks per tick (lower = more turns on the way down)
-  density: 3         # points drawn per strand per emission (fills the spiral)
+  density: 1         # points drawn per strand per emission (raise to fill gaps when using short-lived particles)
 
 groups:
   # ----- ランク系 -----------------------------------------------
@@ -53,135 +56,135 @@ groups:
     COLOR: RED
     MATERIAL: NETHERITE_INGOT
     walk:
-      - { particle: DUST, color: "#FF2020", size: 0.9 }
-      - { particle: SMALL_FLAME, chance: 0.04 }
+      - { particle: TRAIL, color: "#FF2020", duration: 25, fall: 0.25 }
+      - { particle: SMALL_FLAME, chance: 0.1 }
     idle:
-      - { particle: DUST, color: "#FF2020", size: 0.9 }
-      - { particle: DRIPPING_LAVA, chance: 0.01 }
+      - { particle: TRAIL, color: "#FF2020", duration: 30, fall: 0.5 }
+      - { particle: DRIPPING_LAVA, chance: 0.025 }
 
   MASTER:                # マスター: 紫の帯に魔女の粒、止まると泣く黒曜石の涙
     COLOR: LIGHT_PURPLE
     MATERIAL: AMETHYST_SHARD
     walk:
-      - { particle: DUST, color: "#9900FF", size: 0.9 }
-      - { particle: WITCH, chance: 0.04 }
+      - { particle: TRAIL, color: "#9900FF", duration: 25, fall: 0.25 }
+      - { particle: WITCH, chance: 0.1 }
     idle:
-      - { particle: DUST, color: "#9900FF", size: 0.9 }
-      - { particle: DRIPPING_OBSIDIAN_TEAR, chance: 0.01 }
+      - { particle: TRAIL, color: "#9900FF", duration: 30, fall: 0.5 }
+      - { particle: DRIPPING_OBSIDIAN_TEAR, chance: 0.025 }
 
   DIAMOND:               # ダイヤ: 水色の帯にきらめき、止まると水滴
     COLOR: AQUA
     MATERIAL: DIAMOND
     walk:
-      - { particle: DUST, color: "#60C2FF", size: 0.9 }
-      - { particle: ENCHANTED_HIT, chance: 0.04 }
+      - { particle: TRAIL, color: "#60C2FF", duration: 25, fall: 0.25 }
+      - { particle: ENCHANTED_HIT, chance: 0.1 }
     idle:
-      - { particle: DUST, color: "#60C2FF", size: 0.9 }
-      - { particle: DRIPPING_WATER, chance: 0.01 }
+      - { particle: TRAIL, color: "#60C2FF", duration: 30, fall: 0.5 }
+      - { particle: DRIPPING_WATER, chance: 0.025 }
 
   GOLD:                  # ゴールド: 金の帯にワックスの光、止まるとハチミツが滴る
     COLOR: GOLD
     MATERIAL: GOLD_INGOT
     walk:
-      - { particle: DUST, color: "#FFC83D", size: 0.9 }
-      - { particle: WAX_ON, chance: 0.05 }
+      - { particle: TRAIL, color: "#FFC83D", duration: 25, fall: 0.25 }
+      - { particle: WAX_ON, chance: 0.125 }
     idle:
-      - { particle: DUST, color: "#FFC83D", size: 0.9 }
-      - { particle: DRIPPING_HONEY, chance: 0.01 }
+      - { particle: TRAIL, color: "#FFC83D", duration: 30, fall: 0.5 }
+      - { particle: DRIPPING_HONEY, chance: 0.025 }
 
   # ----- 属性系 -------------------------------------------------
   INFERNO:               # 業火: 赤→黄のグラデーションと炎、止まると火の粉と溶岩
     COLOR: RED
     MATERIAL: BLAZE_POWDER
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.0 }
-      - { particle: FLAME, chance: 0.06 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4 }
+      - { particle: FLAME, chance: 0.15 }
     idle:
-      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.0 }
-      - { particle: LAVA, chance: 0.01 }
-      - { particle: FALLING_LAVA, chance: 0.01 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4 }
+      - { particle: LAVA, chance: 0.025 }
+      - { particle: FALLING_LAVA, chance: 0.025 }
 
   FROST:                 # 氷結: 白い帯に雪の結晶、止まると雪と白い灰が舞う
     COLOR: WHITE
     MATERIAL: BLUE_ICE
     walk:
-      - { particle: DUST, color: "#DDF6FF", size: 0.9 }
-      - { particle: SNOWFLAKE, chance: 0.05 }
+      - { particle: TRAIL, color: "#DDF6FF", duration: 25, fall: 0.25 }
+      - { particle: SNOWFLAKE, chance: 0.125 }
     idle:
-      - { particle: DUST, color: "#DDF6FF", size: 0.9 }
-      - { particle: SNOWFLAKE, chance: 0.04 }
+      - { particle: TRAIL, color: "#DDF6FF", duration: 30, fall: 0.5 }
+      - { particle: SNOWFLAKE, chance: 0.1 }
       - { particle: WHITE_ASH, chance: 0.15 }
 
   SOUL:                  # 魂: 青い魂の炎、止まると魂が昇る
     COLOR: DARK_AQUA
     MATERIAL: SOUL_LANTERN
     walk:
-      - { particle: DUST, color: "#3FD0D4", size: 0.9 }
-      - { particle: SOUL_FIRE_FLAME, chance: 0.05 }
+      - { particle: TRAIL, color: "#3FD0D4", duration: 25, fall: 0.25 }
+      - { particle: SOUL_FIRE_FLAME, chance: 0.125 }
     idle:
       - { particle: SOUL_FIRE_FLAME }
-      - { particle: SOUL, chance: 0.02 }
+      - { particle: SOUL, chance: 0.05 }
 
   ELECTRIC:              # 電撃: 黄色い帯に電気の火花、止まると火花とエンドロッド
     COLOR: YELLOW
     MATERIAL: LIGHTNING_ROD
     walk:
-      - { particle: DUST, color: "#FFF34D", size: 0.8 }
+      - { particle: TRAIL, color: "#FFF34D", duration: 25, fall: 0.25 }
       - { particle: ELECTRIC_SPARK, chance: 0.15 }
     idle:
       - { particle: ELECTRIC_SPARK }
-      - { particle: END_ROD, chance: 0.02 }
+      - { particle: END_ROD, chance: 0.05 }
 
   ENDER:                 # エンド: 紫→黒のグラデーションとポータル、止まると逆ポータル
     COLOR: DARK_PURPLE
     MATERIAL: ENDER_EYE
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.0 }
-      - { particle: PORTAL, chance: 0.08 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4 }
+      - { particle: PORTAL, chance: 0.2 }
     idle:
-      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.0 }
-      - { particle: REVERSE_PORTAL, chance: 0.05 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4 }
+      - { particle: REVERSE_PORTAL, chance: 0.125 }
 
   SCULK:                 # スカルク: 暗い青緑の帯にスカルクの弾け、止まると魂の粒
     COLOR: DARK_AQUA
     MATERIAL: SCULK_CATALYST
     walk:
-      - { particle: DUST, color: "#0F6E6A", size: 1.0 }
-      - { particle: SCULK_CHARGE_POP, chance: 0.08 }
+      - { particle: TRAIL, color: "#0F6E6A", duration: 25, fall: 0.25 }
+      - { particle: SCULK_CHARGE_POP, chance: 0.2 }
     idle:
-      - { particle: DUST, color: "#0F6E6A", size: 1.0 }
-      - { particle: SCULK_SOUL, chance: 0.02 }
+      - { particle: TRAIL, color: "#0F6E6A", duration: 30, fall: 0.5 }
+      - { particle: SCULK_SOUL, chance: 0.05 }
 
   SHADOW:                # 影: 黒い帯と煙、止まると墨が滴る
     COLOR: DARK_GRAY
     MATERIAL: BLACK_DYE
     walk:
-      - { particle: DUST, color: "#151515", size: 1.2 }
-      - { particle: SMOKE, chance: 0.06 }
+      - { particle: TRAIL, color: "#151515", duration: 25, fall: 0.25 }
+      - { particle: SMOKE, chance: 0.15 }
     idle:
-      - { particle: DUST, color: "#151515", size: 1.2 }
-      - { particle: SQUID_INK, chance: 0.01 }
+      - { particle: TRAIL, color: "#151515", duration: 30, fall: 0.5 }
+      - { particle: SQUID_INK, chance: 0.025 }
 
   GLOW:                  # グロウ: 光る粒とエンドロッド、止まると光るイカ墨
     COLOR: AQUA
     MATERIAL: GLOW_INK_SAC
     walk:
       - { particle: GLOW }
-      - { particle: END_ROD, chance: 0.03 }
+      - { particle: END_ROD, chance: 0.075 }
     idle:
       - { particle: GLOW }
-      - { particle: GLOW_SQUID_INK, chance: 0.01 }
+      - { particle: GLOW_SQUID_INK, chance: 0.025 }
 
   # ----- 自然系 -------------------------------------------------
   CHERRY:                # 桜: 桃色の帯と桜の花びら
     COLOR: LIGHT_PURPLE
     MATERIAL: CHERRY_SAPLING
     walk:
-      - { particle: DUST, color: "#FFB7D5", size: 0.9 }
-      - { particle: CHERRY_LEAVES, chance: 0.05 }
+      - { particle: TRAIL, color: "#FFB7D5", duration: 25, fall: 0.25 }
+      - { particle: CHERRY_LEAVES, chance: 0.125 }
     idle:
-      - { particle: DUST, color: "#FFB7D5", size: 0.9 }
-      - { particle: CHERRY_LEAVES, chance: 0.03 }
+      - { particle: TRAIL, color: "#FFB7D5", duration: 30, fall: 0.5 }
+      - { particle: CHERRY_LEAVES, chance: 0.075 }
 
   AUTUMN:                # 紅葉: 色付きの葉が舞う
     COLOR: GOLD
@@ -197,17 +200,17 @@ groups:
     COLOR: GREEN
     MATERIAL: MOSS_BLOCK
     walk:
-      - { particle: DUST, color: "#4CC94C", size: 0.9 }
-      - { particle: HAPPY_VILLAGER, chance: 0.04 }
+      - { particle: TRAIL, color: "#4CC94C", duration: 25, fall: 0.25 }
+      - { particle: HAPPY_VILLAGER, chance: 0.1 }
     idle:
       - { particle: FIREFLY, chance: 0.6 }
-      - { particle: FALLING_SPORE_BLOSSOM, chance: 0.03 }
+      - { particle: FALLING_SPORE_BLOSSOM, chance: 0.075 }
 
   DESERT:                # 砂塵: 砂の色の帯と落ちる砂
     COLOR: YELLOW
     MATERIAL: SAND
     walk:
-      - { particle: DUST, color: "#E3CC8F", size: 1.0 }
+      - { particle: TRAIL, color: "#E3CC8F", duration: 25, fall: 0.25 }
       - { particle: FALLING_DUST, block: SAND, chance: 0.1 }
     idle:
       - { particle: FALLING_DUST, block: SAND }
@@ -216,49 +219,49 @@ groups:
     COLOR: BLUE
     MATERIAL: HEART_OF_THE_SEA
     walk:
-      - { particle: DUST, color: "#2E8BFF", size: 0.9 }
-      - { particle: BUBBLE_POP, chance: 0.06 }
+      - { particle: TRAIL, color: "#2E8BFF", duration: 25, fall: 0.25 }
+      - { particle: BUBBLE_POP, chance: 0.15 }
     idle:
-      - { particle: DUST, color: "#2E8BFF", size: 0.9 }
-      - { particle: NAUTILUS, chance: 0.04 }
-      - { particle: FALLING_WATER, chance: 0.01 }
+      - { particle: TRAIL, color: "#2E8BFF", duration: 30, fall: 0.5 }
+      - { particle: NAUTILUS, chance: 0.1 }
+      - { particle: FALLING_WATER, chance: 0.025 }
 
   # ----- ファン系 -----------------------------------------------
   RAINBOW:               # 虹: 6色の点がランダムに混ざる
     COLOR: LIGHT_PURPLE
     MATERIAL: PRISMARINE_CRYSTALS
     walk:
-      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17 }
+      - { particle: TRAIL, color: "#FF3B3B", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: TRAIL, color: "#FF9A2E", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: TRAIL, color: "#FFE83B", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: TRAIL, color: "#4CE04C", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: TRAIL, color: "#3B8BFF", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: TRAIL, color: "#B34CFF", duration: 25, fall: 0.25, chance: 0.17 }
     idle:
-      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17 }
-      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17 }
+      - { particle: TRAIL, color: "#FF3B3B", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: TRAIL, color: "#FF9A2E", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: TRAIL, color: "#FFE83B", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: TRAIL, color: "#4CE04C", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: TRAIL, color: "#3B8BFF", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: TRAIL, color: "#B34CFF", duration: 30, fall: 0.5, chance: 0.17 }
 
   LOVE:                  # ハート: ピンクの帯とハート
     COLOR: LIGHT_PURPLE
     MATERIAL: PINK_DYE
     walk:
-      - { particle: DUST, color: "#FF6FB5", size: 0.9 }
-      - { particle: HEART, chance: 0.02 }
+      - { particle: TRAIL, color: "#FF6FB5", duration: 25, fall: 0.25 }
+      - { particle: HEART, chance: 0.05 }
     idle:
-      - { particle: DUST, color: "#FF6FB5", size: 0.9 }
-      - { particle: HEART, chance: 0.02 }
+      - { particle: TRAIL, color: "#FF6FB5", duration: 30, fall: 0.5 }
+      - { particle: HEART, chance: 0.05 }
 
-  MUSIC:                 # 音符: 音符が並ぶ
+  MUSIC:                 # 音符: いろいろな色(音程)の音符が並ぶ
     COLOR: GREEN
     MATERIAL: NOTE_BLOCK
     walk:
-      - { particle: NOTE, chance: 0.3 }
+      - { particle: NOTE, note: random, chance: 0.45 }
     idle:
-      - { particle: NOTE, chance: 0.4 }
+      - { particle: NOTE, note: random, chance: 0.6 }
 
   POTION:                # ポーション: 色付きのポーション効果の渦
     COLOR: DARK_PURPLE
@@ -274,8 +277,8 @@ groups:
     COLOR: YELLOW
     MATERIAL: TOTEM_OF_UNDYING
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#F7D24A", to_color: "#5BD65B", size: 0.9 }
-      - { particle: TOTEM_OF_UNDYING, chance: 0.05 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#F7D24A", to_color: "#5BD65B", size: 1.3 }
+      - { particle: TOTEM_OF_UNDYING, chance: 0.125 }
     idle:
       - { particle: TOTEM_OF_UNDYING, chance: 0.5 }
 
@@ -286,14 +289,14 @@ groups:
       - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.5 }
     idle:
       - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.6 }
-      - { particle: OMINOUS_SPAWNING, chance: 0.04 }
+      - { particle: OMINOUS_SPAWNING, chance: 0.1 }
 
   EMERALD:               # エメラルド: エメラルドのかけらが舞う
     COLOR: GREEN
     MATERIAL: EMERALD
     walk:
-      - { particle: DUST, color: "#17DD62", size: 0.9 }
-      - { particle: ITEM, item: EMERALD, chance: 0.03 }
+      - { particle: TRAIL, color: "#17DD62", duration: 25, fall: 0.25 }
+      - { particle: ITEM, item: EMERALD, chance: 0.075 }
     idle:
-      - { particle: DUST, color: "#17DD62", size: 0.9 }
-      - { particle: ITEM, item: EMERALD, chance: 0.02 }
+      - { particle: TRAIL, color: "#17DD62", duration: 30, fall: 0.5 }
+      - { particle: ITEM, item: EMERALD, chance: 0.05 }

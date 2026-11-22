@@ -1,6 +1,7 @@
 package org.neko.walkorbit;
 
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -53,6 +54,15 @@ public final class ParticleEffect {
     private final double chance;
     private final Object data;
 
+    // TRAIL: a dot that lives `trailDuration` ticks while sliding `trailFall` blocks down
+    private Color trailColor;
+    private int trailDuration;
+    private double trailFall;
+
+    // NOTE: fixed pitch 0-24, or RANDOM_NOTE for a different colour every time; null = plain NOTE
+    private static final int RANDOM_NOTE = -1;
+    private Integer note;
+
     private ParticleEffect(Particle particle, int count, double offset, double speed, double chance, Object data) {
         this.particle = particle;
         this.count = count;
@@ -77,9 +87,10 @@ public final class ParticleEffect {
             particle = FALLBACK;
         }
 
+        Map<String, Object> opts = options(map);
         Object data = null;
-        if (particle.getDataType() != Void.class) {
-            data = parseData(particle, options(map), context, logger);
+        if (particle.getDataType() != Void.class && particle != Particle.TRAIL) {
+            data = parseData(particle, opts, context, logger);
             if (data == null) return null;
         }
 
@@ -87,11 +98,39 @@ public final class ParticleEffect {
         double offset = number(map.get("offset"), 0, "offset", context, logger);
         double speed = number(map.get("speed"), 0, "speed", context, logger);
         double chance = Math.max(0, Math.min(1, number(map.get("chance"), 1, "chance", context, logger)));
-        return new ParticleEffect(particle, count, offset, speed, chance, data);
+        ParticleEffect effect = new ParticleEffect(particle, count, offset, speed, chance, data);
+
+        if (particle == Particle.TRAIL) {
+            effect.trailColor = color(opts.get("color"), Color.WHITE, context, logger);
+            effect.trailDuration = Math.max(1, (int) number(opts.get("duration"), 30, "duration", context, logger));
+            effect.trailFall = number(opts.get("fall"), 0.3, "fall", context, logger);
+        }
+        if (particle == Particle.NOTE && opts.get("note") != null) {
+            Object n = opts.get("note");
+            effect.note = "random".equalsIgnoreCase(n.toString().trim())
+                    ? RANDOM_NOTE
+                    : Math.max(0, Math.min(24, (int) number(n, 0, "note", context, logger)));
+        }
+        return effect;
     }
 
     public void spawn(World world, double x, double y, double z) {
-        if (chance < 1 && ThreadLocalRandom.current().nextDouble() >= chance) return;
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        if (chance < 1 && rnd.nextDouble() >= chance) return;
+
+        if (particle == Particle.TRAIL) {
+            Particle.Trail trail = new Particle.Trail(new Location(world, x, y - trailFall, z), trailColor, trailDuration);
+            world.spawnParticle(particle, x, y, z, count, offset, offset, offset, 0, trail, false);
+            return;
+        }
+        if (note != null) {
+            // With count 0 the client reads offsetX as the note pitch (0-24 / 24) and colours it accordingly
+            int pitch = note == RANDOM_NOTE ? rnd.nextInt(25) : note;
+            for (int i = 0; i < count; i++) {
+                world.spawnParticle(particle, x, y, z, 0, pitch / 24.0, 0, 0, 1, null, false);
+            }
+            return;
+        }
         world.spawnParticle(particle, x, y, z, count, offset, offset, offset, speed, data, false);
     }
 

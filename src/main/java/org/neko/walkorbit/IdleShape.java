@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 public record IdleShape(int delay, int interval, double radius, double top, double bottom, int strands,
                         double rotateSpeed, double fallSpeed, int density) {
 
-    public static final IdleShape DEFAULT = new IdleShape(10, 1, 0.75, 2.4, 0.1, 3, 18, 0.04, 3);
+    public static final IdleShape DEFAULT = new IdleShape(10, 1, 0.75, 2.4, 0.1, 3, 18, 0.04, 1);
 
     public static IdleShape load(ConfigurationSection sec, IdleShape base, String context, Logger logger) {
         if (sec == null) return base;
