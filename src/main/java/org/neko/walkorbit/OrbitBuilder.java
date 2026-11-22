@@ -16,11 +16,13 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.util.Vector;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -37,10 +39,13 @@ import java.util.function.BiConsumer;
  *
  * <ol>
  *   <li>Main screen: name preview, the current combination (icons), a name field, and
- *       Add / Remove n / Save buttons.</li>
- *   <li>Picker: every selectable particle as a button.</li>
- *   <li>Options: where it's used (walk / idle / both) and, for coloured particles, RGB sliders,
- *       a hex field and a 16-colour choice on the same screen. "Confirm" adds it to the combination.</li>
+ *       Add / Remove n / Save buttons. Particles are used both walking and standing by default;
+ *       "Edit standing separately" switches to a separate standing list with its own add/remove.</li>
+ *   <li>Picker: every selectable particle as a button with its texture as an icon.</li>
+ *   <li>Options: for coloured particles, RGB sliders, a hex field and a 16-colour choice on the same
+ *       screen, plus "Preview" (dialogs only report values on a button press, so the colour is shown
+ *       then: a swatch on the screen and the real particle in front of the player).
+ *       "Confirm" adds it to the list being edited.</li>
  * </ol>
  * A name and at least one particle are required to save. Saved orbits go to custom_orbits.yml and
  * appear in everyone's menu.
@@ -61,21 +66,67 @@ public final class OrbitBuilder {
     };
     private static final String NO_PALETTE = "none";
 
-    enum Use { WALK, IDLE, BOTH }
-
     static final class Slot {
         Particle particle;
-        Use use = Use.BOTH;
         Color color;
         Color color2;
         float size = 1f;
         String material;
+
+        Slot copy() {
+            Slot s = new Slot();
+            s.particle = particle;
+            s.color = color;
+            s.color2 = color2;
+            s.size = size;
+            s.material = material;
+            return s;
+        }
+    }
+
+    /** What was typed on the options screen, so it survives a preview / an error. */
+    static final class Draft {
+        float r = 255, g = 255, b = 255, size = 1f;
+        String hex = "", palette = NO_PALETTE, hex2 = "", palette2 = NO_PALETTE;
+        String block = "STONE", item = "DIAMOND";
+
+        static Draft from(DialogResponseView view) {
+            Draft d = new Draft();
+            d.r = orElse(view.getFloat("r"), 255f);
+            d.g = orElse(view.getFloat("g"), 255f);
+            d.b = orElse(view.getFloat("b"), 255f);
+            d.size = orElse(view.getFloat("size"), 1f);
+            d.hex = orElse(view.getText("hex"), "");
+            d.palette = orElse(view.getText("palette"), NO_PALETTE);
+            d.hex2 = orElse(view.getText("hex2"), "");
+            d.palette2 = orElse(view.getText("palette2"), NO_PALETTE);
+            d.block = orElse(view.getText("block"), "STONE");
+            d.item = orElse(view.getText("item"), "DIAMOND");
+            return d;
+        }
+
+        private static <T> T orElse(T v, T def) {
+            return v == null ? def : v;
+        }
     }
 
     static final class Session {
-        final List<Slot> slots = new ArrayList<>();
+        final List<Slot> walk = new ArrayList<>();
+        final List<Slot> idle = new ArrayList<>();
+        /** false: standing uses the same particles as walking. */
+        boolean idleSeparate;
+        /** true while the standing list is the one being edited. */
+        boolean editingIdle;
         String name = "";
         String error;
+
+        List<Slot> editing() {
+            return editingIdle ? idle : walk;
+        }
+
+        List<Slot> idleEffective() {
+            return idleSeparate ? idle : walk;
+        }
     }
 
     private final WalkOrbit plugin;
@@ -102,6 +153,7 @@ public final class OrbitBuilder {
 
     private void openMain(Player p) {
         Session s = session(p);
+        List<Slot> list = s.editing();
         List<DialogBody> body = new ArrayList<>();
         if (s.error != null) {
             body.add(DialogBody.plainMessage(legacy(s.error)));
@@ -110,36 +162,72 @@ public final class OrbitBuilder {
         body.add(DialogBody.plainMessage(s.name.isBlank()
                 ? text(p, "builder.no_name")
                 : text(p, "builder.preview").append(legacy(colorize(s.name)))));
-        body.add(DialogBody.plainMessage(text(p, "builder.combo",
-                Map.of("n", String.valueOf(s.slots.size()), "max", String.valueOf(MAX_SLOTS)))));
-        if (s.slots.isEmpty()) body.add(DialogBody.plainMessage(text(p, "builder.empty")));
-        for (int i = 0; i < s.slots.size(); i++) {
-            Slot slot = s.slots.get(i);
+
+        String headerKey = s.editingIdle ? "builder.combo_idle" : s.idleSeparate ? "builder.combo_walk" : "builder.combo_both";
+        body.add(DialogBody.plainMessage(text(p, headerKey,
+                Map.of("n", String.valueOf(list.size()), "max", String.valueOf(MAX_SLOTS)))));
+        if (list.isEmpty()) body.add(DialogBody.plainMessage(text(p, "builder.empty")));
+        for (int i = 0; i < list.size(); i++) {
+            Slot slot = list.get(i);
             body.add(DialogBody.item(slotIcon(slot))
-                    .description(DialogBody.plainMessage(slotLine(p, i, slot)))
+                    .description(DialogBody.plainMessage(slotLine(i, slot)))
                     .showTooltip(false)
                     .build());
+        }
+        if (!s.editingIdle && s.idleSeparate) {
+            body.add(DialogBody.plainMessage(text(p, "builder.idle_summary", Map.of("n", String.valueOf(s.idle.size())))));
         }
 
         List<DialogInput> inputs = List.of(DialogInput.text("name", text(p, "builder.name"))
                 .initial(s.name).maxLength(64).width(300).build());
 
         List<ActionButton> buttons = new ArrayList<>();
-        if (s.slots.size() < MAX_SLOTS) {
+        if (list.size() < MAX_SLOTS) {
             buttons.add(button(text(p, "builder.add"), null, action(p, (view, pl) -> {
                 captureName(pl, view);
                 openPicker(pl);
             })));
         }
-        for (int i = 0; i < s.slots.size(); i++) {
+        for (int i = 0; i < list.size(); i++) {
             int index = i;
             buttons.add(button(text(p, "builder.remove", Map.of("n", String.valueOf(i + 1))), null, action(p, (view, pl) -> {
                 captureName(pl, view);
-                Session ss = session(pl);
-                if (index < ss.slots.size()) ss.slots.remove(index);
+                List<Slot> l = session(pl).editing();
+                if (index < l.size()) l.remove(index);
                 openMain(pl);
             })));
         }
+
+        if (!s.editingIdle) {
+            // First time: start the standing list as a copy of the walking one, then edit it on its own
+            buttons.add(button(text(p, s.idleSeparate ? "builder.edit_idle_again" : "builder.edit_idle"),
+                    text(p, "builder.edit_idle_hint"), action(p, (view, pl) -> {
+                        captureName(pl, view);
+                        Session ss = session(pl);
+                        if (!ss.idleSeparate) {
+                            ss.idle.clear();
+                            for (Slot slot : ss.walk) ss.idle.add(slot.copy());
+                            ss.idleSeparate = true;
+                        }
+                        ss.editingIdle = true;
+                        openMain(pl);
+                    })));
+        } else {
+            buttons.add(button(text(p, "builder.edit_walk"), null, action(p, (view, pl) -> {
+                captureName(pl, view);
+                session(pl).editingIdle = false;
+                openMain(pl);
+            })));
+            buttons.add(button(text(p, "builder.idle_same"), null, action(p, (view, pl) -> {
+                captureName(pl, view);
+                Session ss = session(pl);
+                ss.idle.clear();
+                ss.idleSeparate = false;
+                ss.editingIdle = false;
+                openMain(pl);
+            })));
+        }
+
         buttons.add(button(text(p, "builder.save"), text(p, "builder.save_hint"), action(p, (view, pl) -> {
             captureName(pl, view);
             trySave(pl);
@@ -167,84 +255,102 @@ public final class OrbitBuilder {
                     : null;
             buttons.add(ActionButton.builder(ParticleCatalog.sprite(particle).append(Component.text(" " + ParticleCatalog.label(particle))))
                     .tooltip(tip).width(110)
-                    .action(action(p, (view, pl) -> openOptions(pl, particle, null)))
+                    .action(action(p, (view, pl) -> openOptions(pl, particle, null, new Draft(), null)))
                     .build());
         }
         ActionButton back = button(text(p, "builder.back"), null, action(p, (view, pl) -> openMain(pl)));
+        String bodyKey = session(p).editingIdle ? "builder.pick_body_idle" : "builder.pick_body";
         show(p, DialogBase.builder(text(p, "builder.pick_title")).canCloseWithEscape(true)
-                        .body(List.of(DialogBody.plainMessage(text(p, "builder.pick_body")))).build(),
+                        .body(List.of(DialogBody.plainMessage(text(p, bodyKey)))).build(),
                 DialogType.multiAction(buttons).columns(4).exitAction(back).build());
     }
 
     // ------------------------------------------------------------------ options for one particle
 
-    private void openOptions(Player p, Particle particle, String error) {
+    /**
+     * @param preview the slot last previewed (shown as a swatch), or null
+     */
+    private void openOptions(Player p, Particle particle, String error, Draft d, Slot preview) {
         ParticleCatalog.Kind kind = ParticleCatalog.kindOf(particle);
         List<DialogBody> body = new ArrayList<>();
-        body.add(DialogBody.item(new ItemStack(ParticleCatalog.icon(particle)))
+        ItemStack icon = preview != null && preview.color != null ? potion(preview.color) : new ItemStack(ParticleCatalog.icon(particle));
+        body.add(DialogBody.item(icon)
                 .description(DialogBody.plainMessage(ParticleCatalog.sprite(particle)
                         .append(Component.text(" " + ParticleCatalog.label(particle)))))
                 .showTooltip(false).build());
+        if (preview != null && preview.color != null) {
+            Component swatch = text(p, "builder.preview_now").append(swatch(preview.color));
+            if (preview.color2 != null && !preview.color2.equals(preview.color)) {
+                swatch = swatch.append(Component.text("→ ")).append(swatch(preview.color2));
+            }
+            body.add(DialogBody.plainMessage(swatch));
+        }
         if (error != null) body.add(DialogBody.plainMessage(legacy(error)));
 
         List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogInput.singleOption("use", text(p, "builder.use"), List.of(
-                SingleOptionDialogInput.OptionEntry.create(Use.WALK.name(), text(p, "builder.use_walk"), false),
-                SingleOptionDialogInput.OptionEntry.create(Use.IDLE.name(), text(p, "builder.use_idle"), false),
-                SingleOptionDialogInput.OptionEntry.create(Use.BOTH.name(), text(p, "builder.use_both"), true)
-        )).width(300).build());
-
         if (kind.colored()) {
-            inputs.add(DialogInput.numberRange("r", text(p, "builder.red"), 0, 255).step(1f).initial(255f).width(300).build());
-            inputs.add(DialogInput.numberRange("g", text(p, "builder.green"), 0, 255).step(1f).initial(255f).width(300).build());
-            inputs.add(DialogInput.numberRange("b", text(p, "builder.blue"), 0, 255).step(1f).initial(255f).width(300).build());
-            inputs.add(DialogInput.text("hex", text(p, "builder.hex")).initial("").maxLength(7).width(300).build());
-            inputs.add(DialogInput.singleOption("palette", text(p, "builder.palette"), paletteEntries(p)).width(300).build());
+            inputs.add(DialogInput.numberRange("r", text(p, "builder.red"), 0, 255).step(1f).initial(d.r).width(300).build());
+            inputs.add(DialogInput.numberRange("g", text(p, "builder.green"), 0, 255).step(1f).initial(d.g).width(300).build());
+            inputs.add(DialogInput.numberRange("b", text(p, "builder.blue"), 0, 255).step(1f).initial(d.b).width(300).build());
+            inputs.add(DialogInput.text("hex", text(p, "builder.hex")).initial(d.hex).maxLength(7).width(300).build());
+            inputs.add(DialogInput.singleOption("palette", text(p, "builder.palette"), paletteEntries(p, d.palette)).width(300).build());
         }
         if (kind == ParticleCatalog.Kind.TRANSITION) {
-            inputs.add(DialogInput.text("hex2", text(p, "builder.hex2")).initial("").maxLength(7).width(300).build());
-            inputs.add(DialogInput.singleOption("palette2", text(p, "builder.palette2"), paletteEntries(p)).width(300).build());
+            inputs.add(DialogInput.text("hex2", text(p, "builder.hex2")).initial(d.hex2).maxLength(7).width(300).build());
+            inputs.add(DialogInput.singleOption("palette2", text(p, "builder.palette2"), paletteEntries(p, d.palette2)).width(300).build());
         }
         if (ParticleCatalog.hasSize(particle)) {
-            inputs.add(DialogInput.numberRange("size", text(p, "builder.size"), 0.5f, 3f).step(0.1f).initial(1f).width(300).build());
+            inputs.add(DialogInput.numberRange("size", text(p, "builder.size"), 0.5f, 3f).step(0.1f).initial(d.size).width(300).build());
         }
         if (kind == ParticleCatalog.Kind.BLOCK) {
-            inputs.add(DialogInput.text("block", text(p, "builder.block")).initial("STONE").maxLength(64).width(300).build());
+            inputs.add(DialogInput.text("block", text(p, "builder.block")).initial(d.block).maxLength(64).width(300).build());
         }
         if (kind == ParticleCatalog.Kind.ITEM) {
-            inputs.add(DialogInput.text("item", text(p, "builder.item")).initial("DIAMOND").maxLength(64).width(300).build());
+            inputs.add(DialogInput.text("item", text(p, "builder.item")).initial(d.item).maxLength(64).width(300).build());
         }
 
-        ActionButton confirm = button(text(p, "builder.confirm"), null, action(p, (view, pl) -> confirm(pl, particle, view)));
+        List<ActionButton> buttons = new ArrayList<>();
+        buttons.add(button(text(p, "builder.confirm"), null, action(p, (view, pl) -> {
+            Draft draft = Draft.from(view);
+            Slot slot = parse(pl, particle, view, draft);
+            if (slot == null) return; // parse reopened the screen with the error
+            List<Slot> list = session(pl).editing();
+            if (list.size() < MAX_SLOTS) list.add(slot);
+            openMain(pl);
+        })));
+        buttons.add(button(text(p, "builder.preview_color"), text(p, "builder.preview_hint"), action(p, (view, pl) -> {
+            Draft draft = Draft.from(view);
+            Slot slot = parse(pl, particle, view, draft);
+            if (slot == null) return;
+            showPreview(pl, slot);
+            openOptions(pl, particle, null, draft, slot);
+        })));
         ActionButton back = button(text(p, "builder.back"), null, action(p, (view, pl) -> openPicker(pl)));
+
         show(p, DialogBase.builder(text(p, "builder.opt_title", Map.of("particle", ParticleCatalog.label(particle))))
                         .canCloseWithEscape(true).body(body).inputs(inputs).build(),
-                DialogType.confirmation(confirm, back));
+                DialogType.multiAction(buttons).columns(2).exitAction(back).build());
     }
 
-    private void confirm(Player p, Particle particle, DialogResponseView view) {
+    /** Reads the options screen into a slot; on invalid input reopens the screen with the error and returns null. */
+    private Slot parse(Player p, Particle particle, DialogResponseView view, Draft draft) {
         ParticleCatalog.Kind kind = ParticleCatalog.kindOf(particle);
         Slot slot = new Slot();
         slot.particle = particle;
-        try {
-            slot.use = Use.valueOf(view.getText("use"));
-        } catch (RuntimeException e) {
-            slot.use = Use.BOTH;
-        }
 
         if (kind.colored()) {
             slot.color = resolveColor(view, "palette", "hex", true);
             if (slot.color == null) {
-                openOptions(p, particle, lm().getString("builder.err_hex", p));
-                return;
+                openOptions(p, particle, lm().getString("builder.err_hex", p), draft, null);
+                return null;
             }
         }
         if (kind == ParticleCatalog.Kind.TRANSITION) {
             boolean hex2Given = !blank(view.getText("hex2"));
             Color c2 = resolveColor(view, "palette2", "hex2", false);
             if (c2 == null && hex2Given) {
-                openOptions(p, particle, lm().getString("builder.err_hex", p));
-                return;
+                openOptions(p, particle, lm().getString("builder.err_hex", p), draft, null);
+                return null;
             }
             slot.color2 = c2 != null ? c2 : slot.color;
         }
@@ -255,23 +361,40 @@ public final class OrbitBuilder {
         if (kind == ParticleCatalog.Kind.BLOCK) {
             Material m = Material.matchMaterial(String.valueOf(view.getText("block")).trim());
             if (m == null || !m.isBlock()) {
-                openOptions(p, particle, lm().getString("builder.err_block", p));
-                return;
+                openOptions(p, particle, lm().getString("builder.err_block", p), draft, null);
+                return null;
             }
             slot.material = m.name();
         }
         if (kind == ParticleCatalog.Kind.ITEM) {
             Material m = Material.matchMaterial(String.valueOf(view.getText("item")).trim());
             if (m == null || !m.isItem() || m.isAir()) {
-                openOptions(p, particle, lm().getString("builder.err_item", p));
-                return;
+                openOptions(p, particle, lm().getString("builder.err_item", p), draft, null);
+                return null;
             }
             slot.material = m.name();
         }
+        return slot;
+    }
 
-        Session s = session(p);
-        if (s.slots.size() < MAX_SLOTS) s.slots.add(slot);
-        openMain(p);
+    /** Shows the particle for about 2 seconds as a short vertical line in front of the player. */
+    private void showPreview(Player p, Slot slot) {
+        Map<String, Object> map = entry(slot, true);
+        map.remove("chance");
+        map.put("linger", 40);
+        map.put("refresh", 4);
+        map.put("fall", 0.0);
+        if (slot.particle == Particle.TRAIL) map.put("fall", 0.3);
+        ParticleEffect effect = ParticleEffect.from(map, "preview", plugin.getLogger());
+        if (effect == null) return;
+
+        Location eye = p.getEyeLocation();
+        Vector dir = eye.getDirection().setY(0);
+        if (dir.lengthSquared() < 1e-6) dir = new Vector(0, 0, 1);
+        Location c = eye.clone().add(dir.normalize().multiply(2.2));
+        for (int i = 0; i < 6; i++) {
+            effect.spawn(c.getWorld(), c.getX(), c.getY() - 0.6 + i * 0.24, c.getZ());
+        }
     }
 
     /**
@@ -299,13 +422,13 @@ public final class OrbitBuilder {
         return f == null ? 255 : Math.max(0, Math.min(255, Math.round(f)));
     }
 
-    private List<SingleOptionDialogInput.OptionEntry> paletteEntries(Player p) {
+    private List<SingleOptionDialogInput.OptionEntry> paletteEntries(Player p, String selected) {
         List<SingleOptionDialogInput.OptionEntry> list = new ArrayList<>();
-        list.add(SingleOptionDialogInput.OptionEntry.create(NO_PALETTE, text(p, "builder.palette_none"), true));
+        list.add(SingleOptionDialogInput.OptionEntry.create(NO_PALETTE, text(p, "builder.palette_none"), NO_PALETTE.equals(selected)));
         for (String[] c : PALETTE) {
             Component label = Component.text("■■■ ").color(TextColor.fromHexString("#" + c[1]))
                     .append(Component.text("&" + c[0] + "  #" + c[1]).color(TextColor.color(0xAAAAAA)));
-            list.add(SingleOptionDialogInput.OptionEntry.create(c[0], label, false));
+            list.add(SingleOptionDialogInput.OptionEntry.create(c[0], label, c[0].equals(selected)));
         }
         return list;
     }
@@ -321,7 +444,8 @@ public final class OrbitBuilder {
             openMain(p);
             return;
         }
-        if (s.slots.isEmpty()) {
+        List<Slot> idleList = s.idleEffective();
+        if (s.walk.isEmpty() && idleList.isEmpty()) {
             s.error = lm().getString("builder.err_empty", p);
             openMain(p);
             return;
@@ -329,12 +453,10 @@ public final class OrbitBuilder {
 
         List<Map<String, Object>> walk = new ArrayList<>();
         List<Map<String, Object>> idle = new ArrayList<>();
-        for (Slot slot : s.slots) {
-            if (slot.use != Use.IDLE) walk.add(entry(slot, true));
-            if (slot.use != Use.WALK) idle.add(entry(slot, false));
-        }
+        for (Slot slot : s.walk) walk.add(entry(slot, true));
+        for (Slot slot : idleList) idle.add(entry(slot, false));
         String id = makeId(plain);
-        Slot first = s.slots.get(0);
+        Slot first = !s.walk.isEmpty() ? s.walk.get(0) : idleList.get(0);
         String icon = ParticleCatalog.kindOf(first.particle).colored() ? Material.POTION.name()
                 : ParticleCatalog.icon(first.particle).name();
 
@@ -420,30 +542,26 @@ public final class OrbitBuilder {
         return String.format("#%06X", c.asRGB());
     }
 
-    private ItemStack slotIcon(Slot slot) {
-        if (slot.color != null) {
-            ItemStack potion = new ItemStack(Material.POTION);
-            if (potion.getItemMeta() instanceof PotionMeta meta) {
-                meta.setColor(slot.color);
-                potion.setItemMeta(meta);
-            }
-            return potion;
+    private static ItemStack potion(Color color) {
+        ItemStack potion = new ItemStack(Material.POTION);
+        if (potion.getItemMeta() instanceof PotionMeta meta) {
+            meta.setColor(color);
+            potion.setItemMeta(meta);
         }
-        return new ItemStack(ParticleCatalog.icon(slot.particle));
+        return potion;
     }
 
-    private Component slotLine(Player p, int index, Slot slot) {
+    private ItemStack slotIcon(Slot slot) {
+        return slot.color != null ? potion(slot.color) : new ItemStack(ParticleCatalog.icon(slot.particle));
+    }
+
+    private Component slotLine(int index, Slot slot) {
         Component line = Component.text((index + 1) + ". ").append(ParticleCatalog.sprite(slot.particle))
                 .append(Component.text(" " + ParticleCatalog.label(slot.particle) + " "));
         if (slot.color != null) line = line.append(swatch(slot.color));
         if (slot.color2 != null && !slot.color2.equals(slot.color)) line = line.append(Component.text("→")).append(swatch(slot.color2));
         if (slot.material != null) line = line.append(Component.text(slot.material.toLowerCase(Locale.ROOT) + " "));
-        String useKey = switch (slot.use) {
-            case WALK -> "builder.use_walk";
-            case IDLE -> "builder.use_idle";
-            case BOTH -> "builder.use_both";
-        };
-        return line.append(legacy("§7(" + lm().getString(useKey, p) + "§7)"));
+        return line;
     }
 
     private static Component swatch(Color c) {

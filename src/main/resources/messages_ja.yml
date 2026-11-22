@@ -92,3 +92,18 @@ builder.err_save: "&c保存に失敗しました。サーバーのログを確�
 builder.saved: "&aカスタム軌道 {name} &aを保存しました。&7（ID: {id}）"
 command.custom_not_found: "&cカスタム軌道 {id} が見つかりません。"
 command.custom_deleted: "&aカスタム軌道 {id} を削除しました。"
+
+# Builder: walk / standing lists, colour preview
+builder.combo_both: "&f組み合わせ &7（歩行時・停止時 共通）({n}/{max})"
+builder.combo_walk: "&f歩行時の組み合わせ &7({n}/{max})"
+builder.combo_idle: "&f停止時の組み合わせ &7({n}/{max})"
+builder.idle_summary: "&7停止時は個別に設定中（{n}個）"
+builder.edit_idle: "&e停止時を個別に編集"
+builder.edit_idle_again: "&e停止時を編集"
+builder.edit_idle_hint: "&7停止時だけパーティクルを追加・削除できます"
+builder.edit_walk: "&e歩行時の編集に戻る"
+builder.idle_same: "&7停止時を歩行時と同じに戻す"
+builder.pick_body_idle: "&7停止時に追加するパーティクルを選んでください。"
+builder.preview_color: "&b色をプレビュー"
+builder.preview_hint: "&7今の色のパーティクルが、目の前に2秒ほど表示されます"
+builder.preview_now: "&7プレビュー中の色: "
