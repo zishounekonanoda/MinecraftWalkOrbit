@@ -8,7 +8,8 @@
 #   MATERIAL: GUI icon (Bukkit Material name).
 #   walk:     particle list used while moving.
 #   idle:     particle list used while standing still.
-#   walk_shape / idle_shape: optional per-group overrides of the shapes below.
+#   walk_shape / idle_shape: optional per-group overrides of the shapes below
+#             (e.g. walk_shape: { style: BACK }).
 #
 # Particle entry keys (all optional except particle):
 #   particle: Bukkit particle name. Old pre-1.20.5 names are converted automatically.
@@ -29,16 +30,27 @@
 # ===============================================================
 
 walk_shape:
-  interval: 2        # ticks between emissions while moving
-  line_top: 1.5      # top of each band, above the feet
-  line_bottom: 0.45  # bottom of each band, above the feet
-  side_offset: 0.6   # distance to the left/right of the body centre
-  back_offset: 0.15  # how far behind the body centre
-  points: 5          # particles per band (top to bottom)
-  spread: 0.15       # random horizontal scatter (grows toward the bottom)
-  flare: 0.35        # extra outward push at the bottom, so each band fans out downward
-  step: 0.3          # fill the path walked since the last emission every this many blocks
-  sneak_drop: 0.25   # lower the bands by this much while sneaking
+  # How the walk particles are laid out:
+  #   SIDES        left and right of the hips, fanning out downward (default)
+  #   BACK         right behind the back, thick and wide
+  #   BACK_SUBTLE  right behind the back, thin and sparse
+  #   FEET         low at the feet, thick and wide
+  # A group can use a different style with:  walk_shape: { style: FEET }
+  style: SIDES
+
+  # Each style comes with its own sizes. Uncomment a key only to override it
+  # (an overridden key applies to whichever style is selected here).
+  # interval: 2        # ticks between emissions while moving
+  # line_top: 1.5      # top of the band, above the feet
+  # line_bottom: 0.45  # bottom of the band, above the feet
+  # side_offset: 0.6   # SIDES: distance of each band from the body centre
+  # back_offset: 0.15  # how far behind the body centre
+  # width: 0.0         # sideways width of the band (BACK / BACK_SUBTLE / FEET)
+  # points: 5          # particles per band (top to bottom)
+  # spread: 0.15       # random horizontal scatter (grows toward the bottom)
+  # flare: 0.35        # extra outward push at the bottom, so the band fans out downward
+  # step: 0.3          # fill the path walked since the last emission every this many blocks
+  # sneak_drop: 0.25   # lower the band by this much while sneaking
 
 idle_shape:
   delay: 10          # ticks standing still before the idle effect starts

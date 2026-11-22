@@ -26,7 +26,13 @@ Apex Legends 風の「軌道」を、エリトラではなく**歩行**で表示
 | `/walkorbit reload` | `walkorbit.admin` | config と言語ファイルを再読み込みする |
 
 ### 設定（config.yml）
-- `walk_shape`: 移動中の形（帯の上端と下端の高さ、左右の幅、後ろへのずれ、点の数、横のばらつき、下に向かって外側へ広がる量、歩いた道筋を埋める間隔など）
+- `walk_shape`: 移動中の形
+  - `style` で表示方式を選べます。軌道ごとに `walk_shape: { style: FEET }` のように変えることもできます。
+    - `SIDES`: おしりの左右に、下に向かって扇形に広がる帯（既定）
+    - `BACK`: 背中の真後ろに太めの帯
+    - `BACK_SUBTLE`: 背中の真後ろに細く控えめな帯
+    - `FEET`: 足元の低い位置に太めの帯
+  - 高さ・幅・点の数などは style ごとに初期値があり、書いたキーだけ上書きされます（`line_top`、`line_bottom`、`side_offset`、`back_offset`、`width`、`points`、`spread`、`flare`、`step` など）
 - `idle_shape`: 停止中の形（半径、開始と終了の高さ、本数、回転速度、落下速度、密度など）
 - `groups.<名前>`: 軌道ごとの設定
   - `COLOR`: GUI での名前の色（`RED` や `"&c"`）
