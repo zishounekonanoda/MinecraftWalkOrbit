@@ -23,8 +23,14 @@
 #     FALLING_DUST, BLOCK, BLOCK_CRUMBLE, DUST_PILLAR, BLOCK_MARKER   block: <block name>
 #     ITEM                         item: <item name>
 #     TRAIL   color: "#RRGGBB"  duration: 30 (ticks it stays visible)  fall: 0.3 (blocks it slides down meanwhile)
-#             -> long-lived, so far fewer points are needed for an unbroken line
+#             (a dot that flows down to a point below while staying visible)
 #     NOTE    note: random (a different colour each time) or 0-24 (fixed pitch/colour)
+#
+# Keeping any particle visible longer (works for every particle type):
+#   linger: 20   ticks to keep the point visible. The client decides how long a particle lasts and
+#                the server can't change it, so the plugin re-sends it at the same place instead.
+#   refresh: 4   re-send every this many ticks (about how long that particle lasts on its own)
+#   fall: 0.3    slide this many blocks down over the linger time (a drip, for any particle)
 #     SCULK_CHARGE, DRAGON_BREATH  value: <number>
 #   (The older "redstone: { color, size }" block is still accepted.)
 # ===============================================================
@@ -69,9 +75,11 @@ groups:
     COLOR: RED
     MATERIAL: NETHERITE_INGOT
     walk:
+      - { particle: DUST, color: "#FF2020", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FF2020", duration: 25, fall: 0.25 }
       - { particle: SMALL_FLAME, chance: 0.1 }
     idle:
+      - { particle: DUST, color: "#FF2020", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FF2020", duration: 30, fall: 0.5 }
       - { particle: DRIPPING_LAVA, chance: 0.025 }
 
@@ -79,9 +87,11 @@ groups:
     COLOR: LIGHT_PURPLE
     MATERIAL: AMETHYST_SHARD
     walk:
+      - { particle: DUST, color: "#9900FF", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#9900FF", duration: 25, fall: 0.25 }
       - { particle: WITCH, chance: 0.1 }
     idle:
+      - { particle: DUST, color: "#9900FF", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#9900FF", duration: 30, fall: 0.5 }
       - { particle: DRIPPING_OBSIDIAN_TEAR, chance: 0.025 }
 
@@ -89,9 +99,11 @@ groups:
     COLOR: AQUA
     MATERIAL: DIAMOND
     walk:
+      - { particle: DUST, color: "#60C2FF", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#60C2FF", duration: 25, fall: 0.25 }
       - { particle: ENCHANTED_HIT, chance: 0.1 }
     idle:
+      - { particle: DUST, color: "#60C2FF", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#60C2FF", duration: 30, fall: 0.5 }
       - { particle: DRIPPING_WATER, chance: 0.025 }
 
@@ -99,9 +111,11 @@ groups:
     COLOR: GOLD
     MATERIAL: GOLD_INGOT
     walk:
+      - { particle: DUST, color: "#FFC83D", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FFC83D", duration: 25, fall: 0.25 }
       - { particle: WAX_ON, chance: 0.125 }
     idle:
+      - { particle: DUST, color: "#FFC83D", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FFC83D", duration: 30, fall: 0.5 }
       - { particle: DRIPPING_HONEY, chance: 0.025 }
 
@@ -110,10 +124,10 @@ groups:
     COLOR: RED
     MATERIAL: BLAZE_POWDER
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: FLAME, chance: 0.15 }
     idle:
-      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.4, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: LAVA, chance: 0.025 }
       - { particle: FALLING_LAVA, chance: 0.025 }
 
@@ -121,9 +135,11 @@ groups:
     COLOR: WHITE
     MATERIAL: BLUE_ICE
     walk:
+      - { particle: DUST, color: "#DDF6FF", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#DDF6FF", duration: 25, fall: 0.25 }
       - { particle: SNOWFLAKE, chance: 0.125 }
     idle:
+      - { particle: DUST, color: "#DDF6FF", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#DDF6FF", duration: 30, fall: 0.5 }
       - { particle: SNOWFLAKE, chance: 0.1 }
       - { particle: WHITE_ASH, chance: 0.15 }
@@ -132,39 +148,43 @@ groups:
     COLOR: DARK_AQUA
     MATERIAL: SOUL_LANTERN
     walk:
+      - { particle: DUST, color: "#3FD0D4", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#3FD0D4", duration: 25, fall: 0.25 }
-      - { particle: SOUL_FIRE_FLAME, chance: 0.125 }
+      - { particle: SOUL_FIRE_FLAME, chance: 0.125, linger: 20, refresh: 4, fall: 0.2 }
     idle:
-      - { particle: SOUL_FIRE_FLAME }
+      - { particle: SOUL_FIRE_FLAME, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: SOUL, chance: 0.05 }
 
   ELECTRIC:              # 電撃: 黄色い帯に電気の火花、止まると火花とエンドロッド
     COLOR: YELLOW
     MATERIAL: LIGHTNING_ROD
     walk:
+      - { particle: DUST, color: "#FFF34D", size: 0.8, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FFF34D", duration: 25, fall: 0.25 }
-      - { particle: ELECTRIC_SPARK, chance: 0.15 }
+      - { particle: ELECTRIC_SPARK, chance: 0.15, linger: 20, refresh: 4, fall: 0.2 }
     idle:
-      - { particle: ELECTRIC_SPARK }
+      - { particle: ELECTRIC_SPARK, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: END_ROD, chance: 0.05 }
 
   ENDER:                 # エンド: 紫→黒のグラデーションとポータル、止まると逆ポータル
     COLOR: DARK_PURPLE
     MATERIAL: ENDER_EYE
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: PORTAL, chance: 0.2 }
     idle:
-      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.4, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: REVERSE_PORTAL, chance: 0.125 }
 
   SCULK:                 # スカルク: 暗い青緑の帯にスカルクの弾け、止まると魂の粒
     COLOR: DARK_AQUA
     MATERIAL: SCULK_CATALYST
     walk:
+      - { particle: DUST, color: "#0F6E6A", size: 1.0, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#0F6E6A", duration: 25, fall: 0.25 }
       - { particle: SCULK_CHARGE_POP, chance: 0.2 }
     idle:
+      - { particle: DUST, color: "#0F6E6A", size: 1.0, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#0F6E6A", duration: 30, fall: 0.5 }
       - { particle: SCULK_SOUL, chance: 0.05 }
 
@@ -172,9 +192,11 @@ groups:
     COLOR: DARK_GRAY
     MATERIAL: BLACK_DYE
     walk:
+      - { particle: DUST, color: "#151515", size: 1.2, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#151515", duration: 25, fall: 0.25 }
       - { particle: SMOKE, chance: 0.15 }
     idle:
+      - { particle: DUST, color: "#151515", size: 1.2, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#151515", duration: 30, fall: 0.5 }
       - { particle: SQUID_INK, chance: 0.025 }
 
@@ -182,10 +204,10 @@ groups:
     COLOR: AQUA
     MATERIAL: GLOW_INK_SAC
     walk:
-      - { particle: GLOW }
+      - { particle: GLOW, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: END_ROD, chance: 0.075 }
     idle:
-      - { particle: GLOW }
+      - { particle: GLOW, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: GLOW_SQUID_INK, chance: 0.025 }
 
   # ----- 自然系 -------------------------------------------------
@@ -193,9 +215,11 @@ groups:
     COLOR: LIGHT_PURPLE
     MATERIAL: CHERRY_SAPLING
     walk:
+      - { particle: DUST, color: "#FFB7D5", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FFB7D5", duration: 25, fall: 0.25 }
       - { particle: CHERRY_LEAVES, chance: 0.125 }
     idle:
+      - { particle: DUST, color: "#FFB7D5", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FFB7D5", duration: 30, fall: 0.5 }
       - { particle: CHERRY_LEAVES, chance: 0.075 }
 
@@ -213,6 +237,7 @@ groups:
     COLOR: GREEN
     MATERIAL: MOSS_BLOCK
     walk:
+      - { particle: DUST, color: "#4CC94C", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#4CC94C", duration: 25, fall: 0.25 }
       - { particle: HAPPY_VILLAGER, chance: 0.1 }
     idle:
@@ -223,6 +248,7 @@ groups:
     COLOR: YELLOW
     MATERIAL: SAND
     walk:
+      - { particle: DUST, color: "#E3CC8F", size: 1.0, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#E3CC8F", duration: 25, fall: 0.25 }
       - { particle: FALLING_DUST, block: SAND, chance: 0.1 }
     idle:
@@ -232,9 +258,11 @@ groups:
     COLOR: BLUE
     MATERIAL: HEART_OF_THE_SEA
     walk:
+      - { particle: DUST, color: "#2E8BFF", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#2E8BFF", duration: 25, fall: 0.25 }
       - { particle: BUBBLE_POP, chance: 0.15 }
     idle:
+      - { particle: DUST, color: "#2E8BFF", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#2E8BFF", duration: 30, fall: 0.5 }
       - { particle: NAUTILUS, chance: 0.1 }
       - { particle: FALLING_WATER, chance: 0.025 }
@@ -244,27 +272,41 @@ groups:
     COLOR: LIGHT_PURPLE
     MATERIAL: PRISMARINE_CRYSTALS
     walk:
+      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FF3B3B", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FF9A2E", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FFE83B", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#4CE04C", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#3B8BFF", duration: 25, fall: 0.25, chance: 0.17 }
+      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#B34CFF", duration: 25, fall: 0.25, chance: 0.17 }
     idle:
+      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FF3B3B", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FF9A2E", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FFE83B", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#4CE04C", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#3B8BFF", duration: 30, fall: 0.5, chance: 0.17 }
+      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#B34CFF", duration: 30, fall: 0.5, chance: 0.17 }
 
   LOVE:                  # ハート: ピンクの帯とハート
     COLOR: LIGHT_PURPLE
     MATERIAL: PINK_DYE
     walk:
+      - { particle: DUST, color: "#FF6FB5", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#FF6FB5", duration: 25, fall: 0.25 }
       - { particle: HEART, chance: 0.05 }
     idle:
+      - { particle: DUST, color: "#FF6FB5", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#FF6FB5", duration: 30, fall: 0.5 }
       - { particle: HEART, chance: 0.05 }
 
@@ -280,17 +322,17 @@ groups:
     COLOR: DARK_PURPLE
     MATERIAL: BREWING_STAND
     walk:
-      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6 }
-      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4 }
+      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6, linger: 20, refresh: 4, fall: 0.2 }
+      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4, linger: 20, refresh: 4, fall: 0.2 }
     idle:
-      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6 }
-      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4 }
+      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6, linger: 24, refresh: 4, fall: 0.45 }
+      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4, linger: 24, refresh: 4, fall: 0.45 }
 
   TOTEM:                 # 不死のトーテム: 金と緑の帯にトーテムの粒
     COLOR: YELLOW
     MATERIAL: TOTEM_OF_UNDYING
     walk:
-      - { particle: DUST_COLOR_TRANSITION, color: "#F7D24A", to_color: "#5BD65B", size: 1.3 }
+      - { particle: DUST_COLOR_TRANSITION, color: "#F7D24A", to_color: "#5BD65B", size: 1.3, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TOTEM_OF_UNDYING, chance: 0.125 }
     idle:
       - { particle: TOTEM_OF_UNDYING, chance: 0.5 }
@@ -299,17 +341,19 @@ groups:
     COLOR: DARK_BLUE
     MATERIAL: OMINOUS_TRIAL_KEY
     walk:
-      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.5 }
+      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.5, linger: 20, refresh: 4, fall: 0.2 }
     idle:
-      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.6 }
+      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.6, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: OMINOUS_SPAWNING, chance: 0.1 }
 
   EMERALD:               # エメラルド: エメラルドのかけらが舞う
     COLOR: GREEN
     MATERIAL: EMERALD
     walk:
+      - { particle: DUST, color: "#17DD62", size: 0.9, linger: 20, refresh: 4, fall: 0.2 }
       - { particle: TRAIL, color: "#17DD62", duration: 25, fall: 0.25 }
       - { particle: ITEM, item: EMERALD, chance: 0.075 }
     idle:
+      - { particle: DUST, color: "#17DD62", size: 0.9, linger: 24, refresh: 4, fall: 0.45 }
       - { particle: TRAIL, color: "#17DD62", duration: 30, fall: 0.5 }
       - { particle: ITEM, item: EMERALD, chance: 0.05 }

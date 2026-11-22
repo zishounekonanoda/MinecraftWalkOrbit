@@ -43,6 +43,7 @@ public class OrbitTask extends BukkitRunnable {
     @Override
     public void run() {
         tick++;
+        Lingering.tick();
         for (Player p : Bukkit.getOnlinePlayers()) {
             OrbitGroup group = plugin.getSelectedGroup(p);
             if (group == null) {

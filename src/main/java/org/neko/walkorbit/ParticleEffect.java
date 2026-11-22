@@ -63,6 +63,24 @@ public final class ParticleEffect {
     private static final int RANDOM_NOTE = -1;
     private Integer note;
 
+    // Linger: keep the point visible for `linger` ticks by re-sending it every `refresh` ticks,
+    // sliding `lingerFall` blocks down meanwhile. Works for any particle (see Lingering).
+    private int linger;
+    private int refresh = 1;
+    private double lingerFall;
+
+    int linger() {
+        return linger;
+    }
+
+    int refresh() {
+        return refresh;
+    }
+
+    double fall() {
+        return lingerFall;
+    }
+
     private ParticleEffect(Particle particle, int count, double offset, double speed, double chance, Object data) {
         this.particle = particle;
         this.count = count;
@@ -111,13 +129,26 @@ public final class ParticleEffect {
                     ? RANDOM_NOTE
                     : Math.max(0, Math.min(24, (int) number(n, 0, "note", context, logger)));
         }
+
+        effect.linger = Math.max(0, (int) number(opts.get("linger"), 0, "linger", context, logger));
+        if (effect.linger > 0) {
+            effect.refresh = Math.max(1, (int) number(opts.get("refresh"), 4, "refresh", context, logger));
+            // For TRAIL, "fall" already moves the dot itself, so it isn't applied twice
+            effect.lingerFall = particle == Particle.TRAIL ? 0 : number(opts.get("fall"), 0, "fall", context, logger);
+        }
         return effect;
     }
 
+    /** Spawns this effect at a shape point (subject to chance), and keeps it alive if linger is set. */
     public void spawn(World world, double x, double y, double z) {
-        ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        if (chance < 1 && rnd.nextDouble() >= chance) return;
+        if (chance < 1 && ThreadLocalRandom.current().nextDouble() >= chance) return;
+        emit(world, x, y, z);
+        if (linger > 0) Lingering.add(this, world, x, y, z);
+    }
 
+    /** Sends the particle once, with no chance roll and no lingering. */
+    void emit(World world, double x, double y, double z) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
         if (particle == Particle.TRAIL) {
             Particle.Trail trail = new Particle.Trail(new Location(world, x, y - trailFall, z), trailColor, trailDuration);
             world.spawnParticle(particle, x, y, z, count, offset, offset, offset, 0, trail, false);

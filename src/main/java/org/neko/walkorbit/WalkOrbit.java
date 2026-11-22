@@ -40,6 +40,7 @@ public final class WalkOrbit extends JavaPlugin {
     @Override
     public void onDisable() {
         if (orbitTask != null) orbitTask.cancel();
+        Lingering.clear();
         if (localeManager != null) localeManager.savePlayerLocales();
     }
 
@@ -50,6 +51,7 @@ public final class WalkOrbit extends JavaPlugin {
     }
 
     private void loadGroups() {
+        Lingering.clear(); // remembered points belong to the old effect objects
         groups = OrbitGroup.loadAll(getConfig(), getLogger());
         getLogger().info("Loaded " + groups.size() + " walk orbit group(s).");
     }
