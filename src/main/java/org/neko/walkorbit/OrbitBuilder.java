@@ -165,7 +165,7 @@ public final class OrbitBuilder {
                     : kind == ParticleCatalog.Kind.BLOCK ? text(p, "builder.tip_block")
                     : kind == ParticleCatalog.Kind.ITEM ? text(p, "builder.tip_item")
                     : null;
-            buttons.add(ActionButton.builder(Component.text(ParticleCatalog.label(particle)))
+            buttons.add(ActionButton.builder(ParticleCatalog.sprite(particle).append(Component.text(" " + ParticleCatalog.label(particle))))
                     .tooltip(tip).width(110)
                     .action(action(p, (view, pl) -> openOptions(pl, particle, null)))
                     .build());
@@ -182,7 +182,8 @@ public final class OrbitBuilder {
         ParticleCatalog.Kind kind = ParticleCatalog.kindOf(particle);
         List<DialogBody> body = new ArrayList<>();
         body.add(DialogBody.item(new ItemStack(ParticleCatalog.icon(particle)))
-                .description(DialogBody.plainMessage(Component.text(ParticleCatalog.label(particle))))
+                .description(DialogBody.plainMessage(ParticleCatalog.sprite(particle)
+                        .append(Component.text(" " + ParticleCatalog.label(particle)))))
                 .showTooltip(false).build());
         if (error != null) body.add(DialogBody.plainMessage(legacy(error)));
 
@@ -432,7 +433,8 @@ public final class OrbitBuilder {
     }
 
     private Component slotLine(Player p, int index, Slot slot) {
-        Component line = Component.text((index + 1) + ". " + ParticleCatalog.label(slot.particle) + " ");
+        Component line = Component.text((index + 1) + ". ").append(ParticleCatalog.sprite(slot.particle))
+                .append(Component.text(" " + ParticleCatalog.label(slot.particle) + " "));
         if (slot.color != null) line = line.append(swatch(slot.color));
         if (slot.color2 != null && !slot.color2.equals(slot.color)) line = line.append(Component.text("→")).append(swatch(slot.color2));
         if (slot.material != null) line = line.append(Component.text(slot.material.toLowerCase(Locale.ROOT) + " "));

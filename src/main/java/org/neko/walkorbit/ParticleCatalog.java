@@ -1,5 +1,8 @@
 package org.neko.walkorbit;
 
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.object.ObjectContents;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -9,8 +12,10 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /** What the custom-orbit builder offers: which particles, what extra data each needs, and an icon for each. */
@@ -69,6 +74,55 @@ public final class ParticleCatalog {
             {"ITEM", "ITEM_FRAME"}, {"BLOCK", "GRASS_BLOCK"},
     };
 
+    /**
+     * Vanilla particle id -> its texture in the "minecraft:particles" atlas (a middle animation frame),
+     * read from assets/minecraft/particles/*.json of the 1.21.11 client.
+     */
+    private static final String[] PARTICLE_SPRITE_TABLE = {
+            "ambient_entity_effect", "effect_3", "angry_villager", "angry", "ash", "generic_0", "bubble", "bubble",
+            "bubble_column_up", "bubble", "bubble_pop", "bubble_pop_2", "campfire_cosy_smoke", "big_smoke_6", "campfire_signal_smoke", "big_smoke_6",
+            "cherry_leaves", "cherry_6", "cloud", "generic_3", "composter", "glint", "copper_fire_flame", "copper_fire_flame",
+            "crimson_spore", "generic_0", "crit", "critical_hit", "current_down", "bubble", "damage_indicator", "damage",
+            "dolphin", "generic_0", "dragon_breath", "generic_6", "dripping_dripstone_lava", "drip_hang", "dripping_dripstone_water", "drip_hang",
+            "dripping_honey", "drip_hang", "dripping_lava", "drip_hang", "dripping_obsidian_tear", "drip_hang", "dripping_water", "drip_hang",
+            "dust", "generic_3", "dust_color_transition", "generic_3", "dust_plume", "generic_3", "effect", "effect_3",
+            "egg_crack", "glint", "electric_spark", "glow", "enchant", "sga_n", "enchanted_hit", "enchanted_hit",
+            "end_rod", "glitter_3", "entity_effect", "effect_3", "explosion", "explosion_8", "falling_dripstone_lava", "drip_fall",
+            "falling_dripstone_water", "drip_fall", "falling_dust", "generic_3", "falling_honey", "drip_fall", "falling_lava", "drip_fall",
+            "falling_nectar", "drip_fall", "falling_obsidian_tear", "drip_fall", "falling_spore_blossom", "drip_fall", "falling_water", "drip_fall",
+            "firefly", "firefly", "firework", "spark_3", "fishing", "splash_2", "flame", "flame",
+            "flash", "flash", "glow", "glow", "glow_squid_ink", "generic_3", "gust", "gust_6",
+            "happy_villager", "glint", "heart", "heart", "infested", "infested", "instant_effect", "spell_3",
+            "landing_honey", "drip_land", "landing_lava", "drip_land", "landing_obsidian_tear", "drip_land", "large_smoke", "generic_3",
+            "lava", "lava", "mycelium", "generic_0", "nautilus", "nautilus", "note", "note",
+            "ominous_spawning", "ominous_spawning", "pale_oak_leaves", "pale_oak_6", "poof", "generic_3", "portal", "generic_4",
+            "raid_omen", "raid_omen", "rain", "splash_2", "reverse_portal", "generic_4", "scrape", "glow",
+            "sculk_charge", "sculk_charge_3", "sculk_charge_pop", "sculk_charge_pop_2", "sculk_soul", "sculk_soul_5", "shriek", "shriek",
+            "small_flame", "flame", "small_gust", "small_gust_3", "smoke", "generic_3", "sneeze", "generic_3",
+            "snowflake", "generic_3", "sonic_boom", "sonic_boom_8", "soul", "soul_5", "soul_fire_flame", "soul_fire_flame",
+            "spit", "generic_3", "splash", "splash_2", "spore_blossom_air", "drip_fall", "squid_ink", "generic_3",
+            "sweep_attack", "sweep_4", "tinted_leaves", "leaf_6", "totem_of_undying", "glitter_3", "trail", "generic_0",
+            "trial_omen", "trial_omen", "trial_spawner_detection", "trial_spawner_detection_2", "trial_spawner_detection_ominous", "trial_spawner_detection_ominous_2", "underwater", "generic_0",
+            "vault_connection", "vault_connection", "vibration", "vibration", "warped_spore", "generic_0", "wax_off", "glow",
+            "wax_on", "glow", "white_ash", "generic_0", "white_smoke", "generic_3", "witch", "spell_3",
+    };
+    private static final Map<String, String> PARTICLE_SPRITES = new HashMap<>();
+    static {
+        for (int i = 0; i < PARTICLE_SPRITE_TABLE.length; i += 2) {
+            PARTICLE_SPRITES.put(PARTICLE_SPRITE_TABLE[i], PARTICLE_SPRITE_TABLE[i + 1]);
+        }
+    }
+
+    /** Particles that draw a block/item instead of their own texture: {atlas, sprite}. */
+    private static final Map<String, String[]> FALLBACK_SPRITES = Map.of(
+            "ITEM", new String[]{"items", "item/diamond"},
+            "ITEM_SNOWBALL", new String[]{"items", "item/snowball"},
+            "ITEM_SLIME", new String[]{"items", "item/slime_ball"},
+            "ITEM_COBWEB", new String[]{"blocks", "block/cobweb"},
+            "BLOCK", new String[]{"blocks", "block/grass_block_side"},
+            "BLOCK_CRUMBLE", new String[]{"blocks", "block/stone"},
+            "DUST_PILLAR", new String[]{"blocks", "block/sand"});
+
     private static final List<Particle> SELECTABLE = Arrays.stream(Particle.values())
             .filter(p -> !EXCLUDED.contains(p))
             .filter(p -> kindOf(p) != null)
@@ -102,6 +156,22 @@ public final class ParticleCatalog {
 
     public static boolean shortLived(Particle p) {
         return SHORT_LIVED.contains(p.name());
+    }
+
+    /**
+     * The particle's own texture as an inline text sprite (1.21.9+ object component), for dialog
+     * buttons and lines. Clients older than 1.21.9 just don't draw it.
+     */
+    public static Component sprite(Particle p) {
+        String own = PARTICLE_SPRITES.get(p.getKey().getKey());
+        if (own != null) return sprite("particles", own);
+        String[] fb = FALLBACK_SPRITES.get(p.name());
+        if (fb != null) return sprite(fb[0], fb[1]);
+        return sprite("particles", "generic_3");
+    }
+
+    private static Component sprite(String atlas, String name) {
+        return Component.object(ObjectContents.sprite(Key.key("minecraft", atlas), Key.key("minecraft", name)));
     }
 
     public static Material icon(Particle p) {
