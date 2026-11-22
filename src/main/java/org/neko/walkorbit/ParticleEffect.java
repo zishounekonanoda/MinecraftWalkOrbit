@@ -1,9 +1,12 @@
 package org.neko.walkorbit;
 
 import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -75,12 +78,9 @@ public final class ParticleEffect {
         }
 
         Object data = null;
-        if (particle == Particle.DUST) {
-            data = parseDust(map.get("redstone"), context, logger);
-        } else if (particle.getDataType() != Void.class) {
-            logger.warning("[" + context + "] Particle '" + particle.name() + "' needs extra data ("
-                    + particle.getDataType().getSimpleName() + ") which this plugin cannot configure; entry skipped.");
-            return null;
+        if (particle.getDataType() != Void.class) {
+            data = parseData(particle, options(map), context, logger);
+            if (data == null) return null;
         }
 
         int count = Math.max(1, (int) number(map.get("count"), 1, "count", context, logger));
@@ -110,23 +110,80 @@ public final class ParticleEffect {
         }
     }
 
-    private static Particle.DustOptions parseDust(Object obj, String context, Logger logger) {
-        Map<?, ?> m = null;
-        if (obj instanceof Map<?, ?> map) m = map;
-        else if (obj instanceof ConfigurationSection sec) m = sec.getValues(false);
-        if (m == null) return new Particle.DustOptions(Color.RED, 1.0f);
+    /**
+     * Data keys may be written directly on the entry (color, to_color, size, block, item, value)
+     * or inside the older "redstone:" block; the entry's own keys win.
+     */
+    private static Map<String, Object> options(Map<?, ?> entry) {
+        Map<String, Object> out = new HashMap<>();
+        Object red = entry.get("redstone");
+        if (red instanceof ConfigurationSection sec) red = sec.getValues(false);
+        if (red instanceof Map<?, ?> m) m.forEach((k, v) -> out.put(String.valueOf(k), v));
+        entry.forEach((k, v) -> out.put(String.valueOf(k), v));
+        return out;
+    }
 
-        Color color = Color.RED;
-        Object hex = m.get("color");
-        if (hex != null) {
-            try {
-                color = Color.fromRGB(parseHex(hex.toString()));
-            } catch (IllegalArgumentException e) {
-                logger.warning("[" + context + "] Invalid color '" + hex + "', using #FF0000");
-            }
+    /** Builds the extra data a particle type needs. Returns null (after logging) if it cannot. */
+    private static Object parseData(Particle particle, Map<String, Object> o, String context, Logger logger) {
+        Class<?> type = particle.getDataType();
+        float size = (float) number(o.get("size"), 1.0, "size", context, logger);
+
+        if (type == Particle.DustOptions.class) {
+            return new Particle.DustOptions(color(o.get("color"), Color.RED, context, logger), size);
         }
-        float size = (float) number(m.get("size"), 1.0, "redstone.size", context, logger);
-        return new Particle.DustOptions(color, size);
+        if (type == Particle.DustTransition.class) {
+            Color from = color(o.get("color"), Color.RED, context, logger);
+            return new Particle.DustTransition(from, color(o.get("to_color"), from, context, logger), size);
+        }
+        if (type == Color.class) {
+            return color(o.get("color"), Color.WHITE, context, logger);
+        }
+        if (type == Particle.Spell.class) {
+            return new Particle.Spell(color(o.get("color"), Color.WHITE, context, logger),
+                    (float) number(o.get("value"), 1.0, "value", context, logger));
+        }
+        if (type == Float.class) {
+            return (float) number(o.get("value"), 0.0, "value", context, logger);
+        }
+        if (type == Integer.class) {
+            return (int) number(o.get("value"), 0, "value", context, logger);
+        }
+        if (type == BlockData.class) {
+            Material m = material(o.get("block"), context, logger);
+            if (m == null || !m.isBlock()) {
+                logger.warning("[" + context + "] " + particle.name() + " needs 'block: <block name>'; entry skipped.");
+                return null;
+            }
+            return m.createBlockData();
+        }
+        if (type == ItemStack.class) {
+            Material m = material(o.get("item"), context, logger);
+            if (m == null || !m.isItem() || m.isAir()) {
+                logger.warning("[" + context + "] " + particle.name() + " needs 'item: <item name>'; entry skipped.");
+                return null;
+            }
+            return new ItemStack(m);
+        }
+        logger.warning("[" + context + "] Particle '" + particle.name() + "' needs "
+                + type.getSimpleName() + " data, which this plugin cannot configure; entry skipped.");
+        return null;
+    }
+
+    private static Color color(Object value, Color def, String context, Logger logger) {
+        if (value == null) return def;
+        try {
+            return Color.fromRGB(parseHex(value.toString()));
+        } catch (IllegalArgumentException e) {
+            logger.warning("[" + context + "] Invalid color '" + value + "', using default");
+            return def;
+        }
+    }
+
+    private static Material material(Object value, String context, Logger logger) {
+        if (value == null) return null;
+        Material m = Material.matchMaterial(value.toString().trim());
+        if (m == null) logger.warning("[" + context + "] Unknown block/item '" + value + "'");
+        return m;
     }
 
     static double number(Object value, double def, String key, String context, Logger logger) {

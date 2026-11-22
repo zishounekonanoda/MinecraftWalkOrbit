@@ -34,7 +34,25 @@ Apex Legends 風の「軌道」を、エリトラではなく**歩行**で表示
   - `walk` / `idle`: パーティクルのリスト
   - `walk_shape` / `idle_shape`: このグループだけ形を変えたいときに書く上書き設定
 
-パーティクル1つあたりのキー: `particle`、`count`（1）、`offset`（0）、`speed`（0）、`chance`（1.0。0〜1 の出現確率）、`redstone`（`DUST` 用の `color` と `size`）。
+パーティクル1つあたりのキー: `particle`、`count`（1）、`offset`（0）、`speed`（0）、`chance`（1.0。0〜1 の出現確率）。
+
+追加データが必要なパーティクルは、次のキーで指定します（古い `redstone:` の書き方も使えます）。
+
+| パーティクル | キー |
+|---|---|
+| `DUST` | `color`、`size` |
+| `DUST_COLOR_TRANSITION` | `color`（開始色）、`to_color`（終了色）、`size` |
+| `ENTITY_EFFECT` / `TINTED_LEAVES` / `FLASH` | `color` |
+| `EFFECT` / `INSTANT_EFFECT` | `color`、`value`（強さ） |
+| `FALLING_DUST` / `BLOCK` / `BLOCK_CRUMBLE` / `DUST_PILLAR` | `block`（ブロック名） |
+| `ITEM` | `item`（アイテム名） |
+| `SCULK_CHARGE` / `DRAGON_BREATH` | `value`（数値） |
+
+### 同梱の軌道（24種）
+- ランク系: PREDATOR、MASTER、DIAMOND、GOLD
+- 属性系: INFERNO（業火）、FROST（氷結）、SOUL（魂）、ELECTRIC（電撃）、ENDER（エンド）、SCULK（スカルク）、SHADOW（影）、GLOW（グロウ）
+- 自然系: CHERRY（桜）、AUTUMN（紅葉）、FOREST（森）、DESERT（砂塵）、OCEAN（海）
+- ファン系: RAINBOW（虹）、LOVE（ハート）、MUSIC（音符）、POTION（ポーション）、TOTEM（不死のトーテム）、OMINOUS（不吉）、EMERALD（エメラルド）
 
 パーティクル名は [Bukkit の Particle 一覧](https://jd.papermc.io/paper/1.21.11/org/bukkit/Particle.html) の名前を使います。1.20.5 より前の古い名前（`REDSTONE`、`FIREWORKS_SPARK` など）は自動で変換されます。`DRIPPING_LAVA` のような滴るパーティクルを `chance` を低くして混ぜると、「滴る」感じが強くなります。
 

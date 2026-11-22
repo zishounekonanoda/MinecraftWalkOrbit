@@ -1,6 +1,6 @@
 # ===============================================================
 # Walk Orbit
-#   walk: while moving, vertical particle lines on the left and right of the hips
+#   walk: while moving, vertical particle bands on the left and right of the hips
 #   idle: while standing still, particles circle the player and drip downward
 #
 # Each group:
@@ -12,16 +12,24 @@
 #
 # Particle entry keys (all optional except particle):
 #   particle: Bukkit particle name. Old pre-1.20.5 names are converted automatically.
-#             REDSTONE / DUST take a "redstone" block with color (hex) and size.
 #   count: 1    offset: 0    speed: 0    (per point; keep 0 for a crisp shape)
-#   chance: 1.0 (0-1, probability per point; use small values for sparse drips)
+#   chance: 1.0 (0-1, probability per point; use small values for sparse extras)
+#   Extra data, only for particles that need it:
+#     DUST                         color: "#RRGGBB"  size: 1.0
+#     DUST_COLOR_TRANSITION        color: "#RRGGBB"  to_color: "#RRGGBB"  size: 1.0
+#     ENTITY_EFFECT, TINTED_LEAVES, FLASH          color: "#RRGGBB"
+#     EFFECT, INSTANT_EFFECT       color: "#RRGGBB"  value: 1.0 (power)
+#     FALLING_DUST, BLOCK, BLOCK_CRUMBLE, DUST_PILLAR, BLOCK_MARKER   block: <block name>
+#     ITEM                         item: <item name>
+#     SCULK_CHARGE, DRAGON_BREATH  value: <number>
+#   (The older "redstone: { color, size }" block is still accepted.)
 # ===============================================================
 
 walk_shape:
   interval: 1        # ticks between emissions while moving
-  line_top: 1.2      # top of each band, above the feet
-  line_bottom: 0.25  # bottom of each band, above the feet
-  side_offset: 0.28  # distance to the left/right of the body centre
+  line_top: 1.5      # top of each band, above the feet
+  line_bottom: 0.45  # bottom of each band, above the feet
+  side_offset: 0.42  # distance to the left/right of the body centre
   back_offset: 0.15  # how far behind the body centre
   points: 8          # particles per band (top to bottom)
   spread: 0.07       # random horizontal scatter of each particle
@@ -40,65 +48,252 @@ idle_shape:
   density: 3         # points drawn per strand per emission (fills the spiral)
 
 groups:
-  # ===============================================================
-  # PREDATOR (プレデター)
-  # ===============================================================
-  PREDATOR:
+  # ----- ランク系 -----------------------------------------------
+  PREDATOR:              # プレデター: 赤い帯に小さな炎、止まると溶岩が滴る
     COLOR: RED
     MATERIAL: NETHERITE_INGOT
     walk:
-      - particle: DUST
-        redstone:
-          color: "#FF2020"
-          size: 0.9
-      - particle: SMALL_FLAME
-        chance: 0.04
+      - { particle: DUST, color: "#FF2020", size: 0.9 }
+      - { particle: SMALL_FLAME, chance: 0.04 }
     idle:
-      - particle: DUST
-        redstone:
-          color: "#FF2020"
-          size: 0.9
-      - particle: DRIPPING_LAVA
-        chance: 0.01
+      - { particle: DUST, color: "#FF2020", size: 0.9 }
+      - { particle: DRIPPING_LAVA, chance: 0.01 }
 
-  # ===============================================================
-  # MASTER (マスター)
-  # ===============================================================
-  MASTER:
+  MASTER:                # マスター: 紫の帯に魔女の粒、止まると泣く黒曜石の涙
     COLOR: LIGHT_PURPLE
     MATERIAL: AMETHYST_SHARD
     walk:
-      - particle: DUST
-        redstone:
-          color: "#9900FF"
-          size: 0.9
-      - particle: WITCH
-        chance: 0.04
+      - { particle: DUST, color: "#9900FF", size: 0.9 }
+      - { particle: WITCH, chance: 0.04 }
     idle:
-      - particle: DUST
-        redstone:
-          color: "#9900FF"
-          size: 0.9
-      - particle: DRIPPING_OBSIDIAN_TEAR
-        chance: 0.01
+      - { particle: DUST, color: "#9900FF", size: 0.9 }
+      - { particle: DRIPPING_OBSIDIAN_TEAR, chance: 0.01 }
 
-  # ===============================================================
-  # DIAMOND (ダイヤモンド)
-  # ===============================================================
-  DIAMOND:
+  DIAMOND:               # ダイヤ: 水色の帯にきらめき、止まると水滴
     COLOR: AQUA
     MATERIAL: DIAMOND
     walk:
-      - particle: DUST
-        redstone:
-          color: "#60C2FF"
-          size: 0.9
-      - particle: ENCHANTED_HIT
-        chance: 0.04
+      - { particle: DUST, color: "#60C2FF", size: 0.9 }
+      - { particle: ENCHANTED_HIT, chance: 0.04 }
     idle:
-      - particle: DUST
-        redstone:
-          color: "#60C2FF"
-          size: 0.9
-      - particle: DRIPPING_WATER
-        chance: 0.01
+      - { particle: DUST, color: "#60C2FF", size: 0.9 }
+      - { particle: DRIPPING_WATER, chance: 0.01 }
+
+  GOLD:                  # ゴールド: 金の帯にワックスの光、止まるとハチミツが滴る
+    COLOR: GOLD
+    MATERIAL: GOLD_INGOT
+    walk:
+      - { particle: DUST, color: "#FFC83D", size: 0.9 }
+      - { particle: WAX_ON, chance: 0.05 }
+    idle:
+      - { particle: DUST, color: "#FFC83D", size: 0.9 }
+      - { particle: DRIPPING_HONEY, chance: 0.01 }
+
+  # ----- 属性系 -------------------------------------------------
+  INFERNO:               # 業火: 赤→黄のグラデーションと炎、止まると火の粉と溶岩
+    COLOR: RED
+    MATERIAL: BLAZE_POWDER
+    walk:
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.0 }
+      - { particle: FLAME, chance: 0.06 }
+    idle:
+      - { particle: DUST_COLOR_TRANSITION, color: "#FF3000", to_color: "#FFD000", size: 1.0 }
+      - { particle: LAVA, chance: 0.01 }
+      - { particle: FALLING_LAVA, chance: 0.01 }
+
+  FROST:                 # 氷結: 白い帯に雪の結晶、止まると雪と白い灰が舞う
+    COLOR: WHITE
+    MATERIAL: BLUE_ICE
+    walk:
+      - { particle: DUST, color: "#DDF6FF", size: 0.9 }
+      - { particle: SNOWFLAKE, chance: 0.05 }
+    idle:
+      - { particle: DUST, color: "#DDF6FF", size: 0.9 }
+      - { particle: SNOWFLAKE, chance: 0.04 }
+      - { particle: WHITE_ASH, chance: 0.15 }
+
+  SOUL:                  # 魂: 青い魂の炎、止まると魂が昇る
+    COLOR: DARK_AQUA
+    MATERIAL: SOUL_LANTERN
+    walk:
+      - { particle: DUST, color: "#3FD0D4", size: 0.9 }
+      - { particle: SOUL_FIRE_FLAME, chance: 0.05 }
+    idle:
+      - { particle: SOUL_FIRE_FLAME }
+      - { particle: SOUL, chance: 0.02 }
+
+  ELECTRIC:              # 電撃: 黄色い帯に電気の火花、止まると火花とエンドロッド
+    COLOR: YELLOW
+    MATERIAL: LIGHTNING_ROD
+    walk:
+      - { particle: DUST, color: "#FFF34D", size: 0.8 }
+      - { particle: ELECTRIC_SPARK, chance: 0.15 }
+    idle:
+      - { particle: ELECTRIC_SPARK }
+      - { particle: END_ROD, chance: 0.02 }
+
+  ENDER:                 # エンド: 紫→黒のグラデーションとポータル、止まると逆ポータル
+    COLOR: DARK_PURPLE
+    MATERIAL: ENDER_EYE
+    walk:
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.0 }
+      - { particle: PORTAL, chance: 0.08 }
+    idle:
+      - { particle: DUST_COLOR_TRANSITION, color: "#B000FF", to_color: "#100018", size: 1.0 }
+      - { particle: REVERSE_PORTAL, chance: 0.05 }
+
+  SCULK:                 # スカルク: 暗い青緑の帯にスカルクの弾け、止まると魂の粒
+    COLOR: DARK_AQUA
+    MATERIAL: SCULK_CATALYST
+    walk:
+      - { particle: DUST, color: "#0F6E6A", size: 1.0 }
+      - { particle: SCULK_CHARGE_POP, chance: 0.08 }
+    idle:
+      - { particle: DUST, color: "#0F6E6A", size: 1.0 }
+      - { particle: SCULK_SOUL, chance: 0.02 }
+
+  SHADOW:                # 影: 黒い帯と煙、止まると墨が滴る
+    COLOR: DARK_GRAY
+    MATERIAL: BLACK_DYE
+    walk:
+      - { particle: DUST, color: "#151515", size: 1.2 }
+      - { particle: SMOKE, chance: 0.06 }
+    idle:
+      - { particle: DUST, color: "#151515", size: 1.2 }
+      - { particle: SQUID_INK, chance: 0.01 }
+
+  GLOW:                  # グロウ: 光る粒とエンドロッド、止まると光るイカ墨
+    COLOR: AQUA
+    MATERIAL: GLOW_INK_SAC
+    walk:
+      - { particle: GLOW }
+      - { particle: END_ROD, chance: 0.03 }
+    idle:
+      - { particle: GLOW }
+      - { particle: GLOW_SQUID_INK, chance: 0.01 }
+
+  # ----- 自然系 -------------------------------------------------
+  CHERRY:                # 桜: 桃色の帯と桜の花びら
+    COLOR: LIGHT_PURPLE
+    MATERIAL: CHERRY_SAPLING
+    walk:
+      - { particle: DUST, color: "#FFB7D5", size: 0.9 }
+      - { particle: CHERRY_LEAVES, chance: 0.05 }
+    idle:
+      - { particle: DUST, color: "#FFB7D5", size: 0.9 }
+      - { particle: CHERRY_LEAVES, chance: 0.03 }
+
+  AUTUMN:                # 紅葉: 色付きの葉が舞う
+    COLOR: GOLD
+    MATERIAL: OAK_LEAVES
+    walk:
+      - { particle: TINTED_LEAVES, color: "#E0702A", chance: 0.6 }
+      - { particle: TINTED_LEAVES, color: "#C8341E", chance: 0.4 }
+    idle:
+      - { particle: TINTED_LEAVES, color: "#E0702A", chance: 0.5 }
+      - { particle: TINTED_LEAVES, color: "#F2B233", chance: 0.5 }
+
+  FOREST:                # 森: 緑の帯と村人の喜び、止まるとホタルと胞子
+    COLOR: GREEN
+    MATERIAL: MOSS_BLOCK
+    walk:
+      - { particle: DUST, color: "#4CC94C", size: 0.9 }
+      - { particle: HAPPY_VILLAGER, chance: 0.04 }
+    idle:
+      - { particle: FIREFLY, chance: 0.6 }
+      - { particle: FALLING_SPORE_BLOSSOM, chance: 0.03 }
+
+  DESERT:                # 砂塵: 砂の色の帯と落ちる砂
+    COLOR: YELLOW
+    MATERIAL: SAND
+    walk:
+      - { particle: DUST, color: "#E3CC8F", size: 1.0 }
+      - { particle: FALLING_DUST, block: SAND, chance: 0.1 }
+    idle:
+      - { particle: FALLING_DUST, block: SAND }
+
+  OCEAN:                 # 海: 水色の帯と泡、止まると水滴とノーチラス
+    COLOR: BLUE
+    MATERIAL: HEART_OF_THE_SEA
+    walk:
+      - { particle: DUST, color: "#2E8BFF", size: 0.9 }
+      - { particle: BUBBLE_POP, chance: 0.06 }
+    idle:
+      - { particle: DUST, color: "#2E8BFF", size: 0.9 }
+      - { particle: NAUTILUS, chance: 0.04 }
+      - { particle: FALLING_WATER, chance: 0.01 }
+
+  # ----- ファン系 -----------------------------------------------
+  RAINBOW:               # 虹: 6色の点がランダムに混ざる
+    COLOR: LIGHT_PURPLE
+    MATERIAL: PRISMARINE_CRYSTALS
+    walk:
+      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17 }
+    idle:
+      - { particle: DUST, color: "#FF3B3B", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#FF9A2E", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#FFE83B", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#4CE04C", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#3B8BFF", size: 0.9, chance: 0.17 }
+      - { particle: DUST, color: "#B34CFF", size: 0.9, chance: 0.17 }
+
+  LOVE:                  # ハート: ピンクの帯とハート
+    COLOR: LIGHT_PURPLE
+    MATERIAL: PINK_DYE
+    walk:
+      - { particle: DUST, color: "#FF6FB5", size: 0.9 }
+      - { particle: HEART, chance: 0.02 }
+    idle:
+      - { particle: DUST, color: "#FF6FB5", size: 0.9 }
+      - { particle: HEART, chance: 0.02 }
+
+  MUSIC:                 # 音符: 音符が並ぶ
+    COLOR: GREEN
+    MATERIAL: NOTE_BLOCK
+    walk:
+      - { particle: NOTE, chance: 0.3 }
+    idle:
+      - { particle: NOTE, chance: 0.4 }
+
+  POTION:                # ポーション: 色付きのポーション効果の渦
+    COLOR: DARK_PURPLE
+    MATERIAL: BREWING_STAND
+    walk:
+      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6 }
+      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4 }
+    idle:
+      - { particle: ENTITY_EFFECT, color: "#C04CFF", chance: 0.6 }
+      - { particle: ENTITY_EFFECT, color: "#4CFFB0", chance: 0.4 }
+
+  TOTEM:                 # 不死のトーテム: 金と緑の帯にトーテムの粒
+    COLOR: YELLOW
+    MATERIAL: TOTEM_OF_UNDYING
+    walk:
+      - { particle: DUST_COLOR_TRANSITION, color: "#F7D24A", to_color: "#5BD65B", size: 0.9 }
+      - { particle: TOTEM_OF_UNDYING, chance: 0.05 }
+    idle:
+      - { particle: TOTEM_OF_UNDYING, chance: 0.5 }
+
+  OMINOUS:               # 不吉: トライアルスポナーの炎、止まると不吉な渦
+    COLOR: DARK_BLUE
+    MATERIAL: OMINOUS_TRIAL_KEY
+    walk:
+      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.5 }
+    idle:
+      - { particle: TRIAL_SPAWNER_DETECTION_OMINOUS, chance: 0.6 }
+      - { particle: OMINOUS_SPAWNING, chance: 0.04 }
+
+  EMERALD:               # エメラルド: エメラルドのかけらが舞う
+    COLOR: GREEN
+    MATERIAL: EMERALD
+    walk:
+      - { particle: DUST, color: "#17DD62", size: 0.9 }
+      - { particle: ITEM, item: EMERALD, chance: 0.03 }
+    idle:
+      - { particle: DUST, color: "#17DD62", size: 0.9 }
+      - { particle: ITEM, item: EMERALD, chance: 0.02 }

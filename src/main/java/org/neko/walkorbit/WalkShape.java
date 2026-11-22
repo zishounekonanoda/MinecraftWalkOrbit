@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 public record WalkShape(int interval, double lineTop, double lineBottom, double sideOffset, double backOffset,
                         int points, double spread, double step, double sneakDrop) {
 
-    public static final WalkShape DEFAULT = new WalkShape(1, 1.2, 0.25, 0.28, 0.15, 8, 0.07, 0.12, 0.25);
+    public static final WalkShape DEFAULT = new WalkShape(1, 1.5, 0.45, 0.42, 0.15, 8, 0.07, 0.12, 0.25);
 
     /** Beyond this distance between emissions it is a teleport, not walking: don't draw a streak across it. */
     private static final double MAX_SWEEP = 2.0;
