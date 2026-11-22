@@ -8,13 +8,13 @@ import java.util.logging.Logger;
 
 /**
  * While standing still: drops that circle the player and slide down from {@code top} to {@code bottom},
- * then loop back to the top. Each drop leaves a short trail along its own path, so it reads as a
- * descending spiral.
+ * then loop back to the top. Each emission also fills in the path travelled since the previous one
+ * ({@code density} points), so every drop draws a continuous descending spiral.
  */
 public record IdleShape(int delay, int interval, double radius, double top, double bottom, int strands,
-                        double rotateSpeed, double fallSpeed, int trail, int trailSpacing) {
+                        double rotateSpeed, double fallSpeed, int density) {
 
-    public static final IdleShape DEFAULT = new IdleShape(10, 1, 0.7, 1.9, 0.1, 2, 12, 0.06, 4, 1);
+    public static final IdleShape DEFAULT = new IdleShape(10, 1, 0.75, 2.4, 0.1, 3, 18, 0.04, 3);
 
     public static IdleShape load(ConfigurationSection sec, IdleShape base, String context, Logger logger) {
         if (sec == null) return base;
@@ -27,8 +27,7 @@ public record IdleShape(int delay, int interval, double radius, double top, doub
                 Math.max(1, (int) num(sec, "strands", base.strands, context, logger)),
                 num(sec, "rotate_speed", base.rotateSpeed, context, logger),
                 num(sec, "fall_speed", base.fallSpeed, context, logger),
-                Math.max(1, (int) num(sec, "trail", base.trail, context, logger)),
-                Math.max(1, (int) num(sec, "trail_spacing", base.trailSpacing, context, logger)));
+                Math.max(1, (int) num(sec, "density", base.density, context, logger)));
     }
 
     /**
@@ -40,9 +39,10 @@ public record IdleShape(int delay, int interval, double radius, double top, doub
         double strandAngle = 2 * Math.PI / strands;
 
         for (int i = 0; i < strands; i++) {
-            for (int k = 0; k < trail; k++) {
-                long t = time - (long) k * trailSpacing;
-                if (t < 0) break; // trail grows in as the idle effect starts
+            for (int d = 0; d < density; d++) {
+                // points between the previous emission and now, so the spiral has no gaps
+                double t = time - (double) interval * d / density;
+                if (t < 0) break;
                 double angle = t * rotRad + i * strandAngle;
                 double fallen = floorMod(t * fallSpeed + i * range / strands, range);
                 double px = x + Math.cos(angle) * radius;

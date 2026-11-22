@@ -28,6 +28,8 @@ public class OrbitTask extends BukkitRunnable {
         UUID world;
         double x, z;
         long stillTicks;
+        /** Where the walk bands were last drawn; null when the streak should start fresh. */
+        WalkShape.Pose lastWalk;
     }
 
     public OrbitTask(WalkOrbit plugin) {
@@ -54,14 +56,19 @@ public class OrbitTask extends BukkitRunnable {
             boolean moved = updateMotion(p.getUniqueId(), loc);
             Motion m = motions.get(p.getUniqueId());
 
-            if (!canShow(p)) continue;
+            if (!canShow(p)) {
+                m.lastWalk = null;
+                continue;
+            }
 
             if (moved) {
                 if (!group.walk().isEmpty() && tick % group.walkShape().interval() == 0) {
-                    group.walkShape().draw(world, loc.getX(), loc.getY(), loc.getZ(), p.getBodyYaw(),
-                            p.isSneaking(), group.walk());
+                    WalkShape.Pose now = new WalkShape.Pose(loc.getX(), loc.getY(), loc.getZ(), p.getBodyYaw());
+                    group.walkShape().draw(world, m.lastWalk, now, p.isSneaking(), group.walk());
+                    m.lastWalk = now;
                 }
             } else {
+                m.lastWalk = null;
                 IdleShape shape = group.idleShape();
                 long idleTime = m.stillTicks - shape.delay();
                 if (!group.idle().isEmpty() && idleTime >= 0 && tick % shape.interval() == 0) {
@@ -79,6 +86,7 @@ public class OrbitTask extends BukkitRunnable {
         if (!worldId.equals(m.world)) {
             moved = false;
             m.stillTicks = 0;
+            m.lastWalk = null;
         } else {
             double dx = loc.getX() - m.x, dz = loc.getZ() - m.z;
             moved = dx * dx + dz * dz > MOVE_THRESHOLD_SQ;

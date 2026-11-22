@@ -18,25 +18,26 @@
 # ===============================================================
 
 walk_shape:
-  interval: 2        # ticks between emissions while moving
-  hip_height: 0.85   # height of the line centre above the feet
-  side_offset: 0.3   # distance to the left/right of the body centre
+  interval: 1        # ticks between emissions while moving
+  line_top: 1.2      # top of each band, above the feet
+  line_bottom: 0.25  # bottom of each band, above the feet
+  side_offset: 0.28  # distance to the left/right of the body centre
   back_offset: 0.15  # how far behind the body centre
-  line_height: 0.45  # length of each vertical line
-  points: 4          # particles per line
-  sneak_drop: 0.25   # lower the lines by this much while sneaking
+  points: 8          # particles per band (top to bottom)
+  spread: 0.07       # random horizontal scatter of each particle
+  step: 0.12         # fill the path walked since the last emission every this many blocks
+  sneak_drop: 0.25   # lower the bands by this much while sneaking
 
 idle_shape:
   delay: 10          # ticks standing still before the idle effect starts
   interval: 1        # ticks between emissions
-  radius: 0.7        # circle radius around the player
-  top: 1.9           # height where drops start
+  radius: 0.75       # circle radius around the player
+  top: 2.4           # height where drops start
   bottom: 0.1        # height where drops end (then loop back to top)
-  strands: 2         # number of drops circling at once
-  rotate_speed: 12   # degrees per tick
-  fall_speed: 0.06   # blocks per tick
-  trail: 4           # points drawn behind each drop
-  trail_spacing: 1   # ticks between those points
+  strands: 3         # number of drops circling at once
+  rotate_speed: 18   # degrees per tick
+  fall_speed: 0.04   # blocks per tick (lower = more turns on the way down)
+  density: 3         # points drawn per strand per emission (fills the spiral)
 
 groups:
   # ===============================================================
@@ -51,14 +52,14 @@ groups:
           color: "#FF2020"
           size: 0.9
       - particle: SMALL_FLAME
-        chance: 0.15
+        chance: 0.04
     idle:
       - particle: DUST
         redstone:
           color: "#FF2020"
           size: 0.9
       - particle: DRIPPING_LAVA
-        chance: 0.03
+        chance: 0.01
 
   # ===============================================================
   # MASTER (マスター)
@@ -72,14 +73,14 @@ groups:
           color: "#9900FF"
           size: 0.9
       - particle: WITCH
-        chance: 0.15
+        chance: 0.04
     idle:
       - particle: DUST
         redstone:
           color: "#9900FF"
           size: 0.9
       - particle: DRIPPING_OBSIDIAN_TEAR
-        chance: 0.03
+        chance: 0.01
 
   # ===============================================================
   # DIAMOND (ダイヤモンド)
@@ -93,11 +94,11 @@ groups:
           color: "#60C2FF"
           size: 0.9
       - particle: ENCHANTED_HIT
-        chance: 0.15
+        chance: 0.04
     idle:
       - particle: DUST
         redstone:
           color: "#60C2FF"
           size: 0.9
       - particle: DRIPPING_WATER
-        chance: 0.03
+        chance: 0.01
