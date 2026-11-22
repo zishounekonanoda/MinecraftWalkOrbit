@@ -65,6 +65,7 @@ public class GuiListener implements Listener {
 
         switch (action) {
             case GuiManager.ACTION_STYLE_MENU -> GuiManager.openStyle(player, plugin);
+            case GuiManager.ACTION_CREATE -> plugin.getBuilder().open(player);
             case GuiManager.ACTION_BACK -> GuiManager.openMain(player, plugin, 0);
             case GuiManager.ACTION_PREV -> GuiManager.openMain(player, plugin, holder.page() - 1);
             case GuiManager.ACTION_NEXT -> GuiManager.openMain(player, plugin, holder.page() + 1);
@@ -92,5 +93,6 @@ public class GuiListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.getOrbitTask().forget(event.getPlayer().getUniqueId());
+        plugin.getBuilder().forget(event.getPlayer().getUniqueId());
     }
 }

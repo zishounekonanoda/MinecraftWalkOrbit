@@ -18,7 +18,9 @@ import java.util.logging.Logger;
  */
 public record OrbitGroup(String name, Material icon, ChatColor color,
                          List<ParticleEffect> walk, List<ParticleEffect> idle,
-                         WalkShape walkShape, IdleShape idleShape) {
+                         WalkShape walkShape, IdleShape idleShape,
+                         /** Name shown in the GUI with &-colour codes (custom orbits), or null to use {@code name}. */
+                         String displayName) {
 
     private static final Material DEFAULT_ICON = Material.GLOWSTONE_DUST;
 
@@ -30,17 +32,30 @@ public record OrbitGroup(String name, Material icon, ChatColor color,
         return chosen == null || chosen == walkShape.style() ? walkShape : chosen.preset();
     }
 
-    public static Map<String, OrbitGroup> loadAll(FileConfiguration config, Logger logger) {
+    /**
+     * Loads the groups from config.yml, then the player-made orbits from {@code custom}
+     * (custom_orbits.yml, same format plus DISPLAY_NAME). Custom orbits use the global shapes.
+     */
+    public static Map<String, OrbitGroup> loadAll(FileConfiguration config, ConfigurationSection custom, Logger logger) {
         WalkShape walkBase = WalkShape.load(config.getConfigurationSection("walk_shape"), WalkShape.DEFAULT, "walk_shape", logger);
         IdleShape idleBase = IdleShape.load(config.getConfigurationSection("idle_shape"), IdleShape.DEFAULT, "idle_shape", logger);
 
-        ConfigurationSection groups = config.getConfigurationSection("groups");
-        if (groups == null) return Collections.emptyMap();
-
         Map<String, OrbitGroup> result = new LinkedHashMap<>();
+        loadSection(config.getConfigurationSection("groups"), walkBase, idleBase, result, logger);
+        loadSection(custom, walkBase, idleBase, result, logger);
+        return Collections.unmodifiableMap(result);
+    }
+
+    private static void loadSection(ConfigurationSection groups, WalkShape walkBase, IdleShape idleBase,
+                                    Map<String, OrbitGroup> result, Logger logger) {
+        if (groups == null) return;
         for (String name : groups.getKeys(false)) {
             ConfigurationSection sec = groups.getConfigurationSection(name);
             if (sec == null) continue;
+            if (result.containsKey(name)) {
+                logger.warning("Duplicate orbit id '" + name + "' ignored.");
+                continue;
+            }
             List<ParticleEffect> walk = effects(sec, "walk", name, logger);
             List<ParticleEffect> idle = effects(sec, "idle", name, logger);
             if (walk.isEmpty() && idle.isEmpty()) {
@@ -48,9 +63,9 @@ public record OrbitGroup(String name, Material icon, ChatColor color,
             }
             result.put(name, new OrbitGroup(name, icon(name, sec, logger), color(name, sec, logger), walk, idle,
                     WalkShape.load(sec.getConfigurationSection("walk_shape"), walkBase, name + ".walk_shape", logger),
-                    IdleShape.load(sec.getConfigurationSection("idle_shape"), idleBase, name + ".idle_shape", logger)));
+                    IdleShape.load(sec.getConfigurationSection("idle_shape"), idleBase, name + ".idle_shape", logger),
+                    sec.getString("DISPLAY_NAME")));
         }
-        return Collections.unmodifiableMap(result);
     }
 
     private static List<ParticleEffect> effects(ConfigurationSection sec, String key, String group, Logger logger) {

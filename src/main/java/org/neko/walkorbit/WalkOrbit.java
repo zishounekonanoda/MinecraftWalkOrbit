@@ -15,6 +15,8 @@ public final class WalkOrbit extends JavaPlugin {
     private Map<String, OrbitGroup> groups = Collections.emptyMap();
     private NamespacedKey selectedKey;
     private NamespacedKey styleKey;
+    private CustomOrbitStore customStore;
+    private OrbitBuilder builder;
 
     @Override
     public void onEnable() {
@@ -23,6 +25,8 @@ public final class WalkOrbit extends JavaPlugin {
         localeManager = new LocaleManager(this);
 
         saveDefaultConfig();
+        customStore = new CustomOrbitStore(this);
+        builder = new OrbitBuilder(this);
         loadGroups();
 
         orbitTask = new OrbitTask(this);
@@ -48,14 +52,24 @@ public final class WalkOrbit extends JavaPlugin {
 
     public void reloadAll() {
         reloadConfig();
+        customStore.reload();
         loadGroups();
         localeManager.reloadLocales();
     }
 
-    private void loadGroups() {
+    /** Re-parses config.yml groups plus custom_orbits.yml (call after saving a custom orbit). */
+    public void loadGroups() {
         Lingering.clear(); // remembered points belong to the old effect objects
-        groups = OrbitGroup.loadAll(getConfig(), getLogger());
+        groups = OrbitGroup.loadAll(getConfig(), customStore.section(), getLogger());
         getLogger().info("Loaded " + groups.size() + " walk orbit group(s).");
+    }
+
+    public CustomOrbitStore getCustomStore() {
+        return customStore;
+    }
+
+    public OrbitBuilder getBuilder() {
+        return builder;
     }
 
     public LocaleManager getLocaleManager() {

@@ -25,6 +25,18 @@ Apex Legends 風の「軌道」を、エリトラではなく**歩行**で表示
 | `/walkorbit set <プレイヤー> <グループ>` | `walkorbit.admin`（OP） | 軌道を付与する |
 | `/walkorbit clear <プレイヤー>` | `walkorbit.admin` | 軌道を外す |
 | `/walkorbit reload` | `walkorbit.admin` | config と言語ファイルを再読み込みする |
+| `/walkorbit create` | `walkorbit.create`（OP） | カスタム軌道の作成ダイアログを開く |
+| `/walkorbit delete <ID>` | `walkorbit.create` | カスタム軌道を削除する |
+
+### カスタム軌道を作る（OP のみ）
+メニュー下段の作業台、または `/walkorbit create` で作成ダイアログが開きます。
+
+1. 「パーティクルを追加」で、全パーティクルの中から選びます（最大5個まで）。
+2. 選ぶと設定画面が開き、使う場面（歩行時・停止時・両方）を選べます。色付きのパーティクルでは、同じ画面に **R・G・B のスライダーと hex code の入力欄** と、**16色の選択肢** が出ます。優先順位は「16色 → hex code → スライダー」です。グラデーションは2色目、ブロックやアイテムを使うパーティクルはその名前も指定します。
+3. 「決定」で組み合わせに追加されます。画面上部に組み合わせと名前のプレビューが表示されます。
+4. 名前（`&a` などの色コードが使えます）を入れて「保存」します。名前が空のときや、パーティクルが1つもないときは保存できません。
+
+保存した軌道は `plugins/WalkOrbit/custom_orbits.yml` に書き込まれ、全員のメニューに並びます。画面全体を覆う・連鎖して大量に出るなどの理由で、ELDER_GUARDIAN、VIBRATION、EXPLOSION_EMITTER、GUST_EMITTER_LARGE / SMALL、BLOCK_MARKER は選べません。
 
 ### 設定（config.yml）
 - `walk_shape`: 移動中の形

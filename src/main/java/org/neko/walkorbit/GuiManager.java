@@ -32,6 +32,7 @@ public final class GuiManager {
     /** Followed by a {@link WalkShape.Style} name, or "DEFAULT" to go back to the server's style. */
     static final String ACTION_STYLE_PREFIX = "style:";
     static final String STYLE_DEFAULT = "DEFAULT";
+    static final String ACTION_CREATE = "create";
 
     private GuiManager() {
     }
@@ -63,6 +64,10 @@ public final class GuiManager {
         }
 
         if (page > 0) inv.setItem(45, actionItem(plugin, Material.ARROW, lm.getString("gui.item.nav.prev", player), ACTION_PREV));
+        if (player.hasPermission(OrbitBuilder.PERMISSION)) {
+            inv.setItem(46, actionItem(plugin, Material.CRAFTING_TABLE, lm.getString("gui.item.create.name", player), ACTION_CREATE,
+                    List.of(lm.getString("gui.item.create.lore", player))));
+        }
         inv.setItem(47, actionItem(plugin, Material.COMPARATOR, lm.getString("gui.item.style.name", player), ACTION_STYLE_MENU,
                 List.of(lm.getString("gui.item.style.lore", player))));
         inv.setItem(48, actionItem(plugin, Material.PLAYER_HEAD, lm.getString("gui.item.lang.name", player), ACTION_LANG));
@@ -152,8 +157,11 @@ public final class GuiManager {
         ItemStack item = new ItemStack(group.icon());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(lm.getString("gui.item.trail.name", player,
-                    Map.of("color", group.color().toString() + ChatColor.BOLD, "trail", group.name())));
+            // Custom orbits show the name their creator typed, with its own &-colours
+            Map<String, String> ph = group.displayName() != null
+                    ? Map.of("color", "", "trail", ChatColor.translateAlternateColorCodes('&', group.displayName()) + ChatColor.RESET)
+                    : Map.of("color", group.color().toString() + ChatColor.BOLD, "trail", group.name());
+            meta.setDisplayName(lm.getString("gui.item.trail.name", player, ph));
             meta.setLore(List.of(lm.getString("gui.item.trail.lore", player)));
             meta.getPersistentDataContainer().set(orbitKey(plugin), PersistentDataType.STRING, group.name());
             item.setItemMeta(meta);

@@ -78,6 +78,29 @@ public class OrbitCommand implements CommandExecutor, TabCompleter {
                 plugin.setSelectedGroup(target, null);
                 sender.sendMessage(lm.getString("command.cleared", self, Map.of("player", target.getName())));
             }
+            case "create" -> {
+                if (self == null) {
+                    sender.sendMessage(lm.getString("command.player_only", null));
+                    return true;
+                }
+                plugin.getBuilder().open(self);
+            }
+            case "delete" -> {
+                if (!sender.hasPermission(OrbitBuilder.PERMISSION)) {
+                    sender.sendMessage(lm.getString("command.no_permission", self));
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(lm.getString("command.usage", self));
+                    return true;
+                }
+                if (!plugin.getCustomStore().delete(args[1])) {
+                    sender.sendMessage(lm.getString("command.custom_not_found", self, Map.of("id", args[1])));
+                    return true;
+                }
+                plugin.loadGroups();
+                sender.sendMessage(lm.getString("command.custom_deleted", self, Map.of("id", args[1])));
+            }
             default -> sender.sendMessage(lm.getString("command.usage", self));
         }
         return true;
@@ -93,8 +116,12 @@ public class OrbitCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> options = new ArrayList<>();
         boolean admin = sender.hasPermission(ADMIN);
-        if (args.length == 1) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("delete") && sender.hasPermission(OrbitBuilder.PERMISSION)) {
+            var custom = plugin.getCustomStore().section();
+            if (custom != null) options.addAll(custom.getKeys(false));
+        } else if (args.length == 1) {
             if (sender.hasPermission(MENU)) options.add("menu");
+            if (sender.hasPermission(OrbitBuilder.PERMISSION)) options.addAll(List.of("create", "delete"));
             if (admin) options.addAll(List.of("set", "clear", "reload"));
         } else if (args.length == 2 && admin && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("clear"))) {
             return null; // player names
