@@ -1,0 +1,103 @@
+# ===============================================================
+# Walk Orbit
+#   walk: while moving, vertical particle lines on the left and right of the hips
+#   idle: while standing still, particles circle the player and drip downward
+#
+# Each group:
+#   COLOR:    name color in the GUI. A ChatColor name (RED, AQUA...) or a code (&c). Optional.
+#   MATERIAL: GUI icon (Bukkit Material name).
+#   walk:     particle list used while moving.
+#   idle:     particle list used while standing still.
+#   walk_shape / idle_shape: optional per-group overrides of the shapes below.
+#
+# Particle entry keys (all optional except particle):
+#   particle: Bukkit particle name. Old pre-1.20.5 names are converted automatically.
+#             REDSTONE / DUST take a "redstone" block with color (hex) and size.
+#   count: 1    offset: 0    speed: 0    (per point; keep 0 for a crisp shape)
+#   chance: 1.0 (0-1, probability per point; use small values for sparse drips)
+# ===============================================================
+
+walk_shape:
+  interval: 2        # ticks between emissions while moving
+  hip_height: 0.85   # height of the line centre above the feet
+  side_offset: 0.3   # distance to the left/right of the body centre
+  back_offset: 0.15  # how far behind the body centre
+  line_height: 0.45  # length of each vertical line
+  points: 4          # particles per line
+  sneak_drop: 0.25   # lower the lines by this much while sneaking
+
+idle_shape:
+  delay: 10          # ticks standing still before the idle effect starts
+  interval: 1        # ticks between emissions
+  radius: 0.7        # circle radius around the player
+  top: 1.9           # height where drops start
+  bottom: 0.1        # height where drops end (then loop back to top)
+  strands: 2         # number of drops circling at once
+  rotate_speed: 12   # degrees per tick
+  fall_speed: 0.06   # blocks per tick
+  trail: 4           # points drawn behind each drop
+  trail_spacing: 1   # ticks between those points
+
+groups:
+  # ===============================================================
+  # PREDATOR (プレデター)
+  # ===============================================================
+  PREDATOR:
+    COLOR: RED
+    MATERIAL: NETHERITE_INGOT
+    walk:
+      - particle: DUST
+        redstone:
+          color: "#FF2020"
+          size: 0.9
+      - particle: SMALL_FLAME
+        chance: 0.15
+    idle:
+      - particle: DUST
+        redstone:
+          color: "#FF2020"
+          size: 0.9
+      - particle: DRIPPING_LAVA
+        chance: 0.03
+
+  # ===============================================================
+  # MASTER (マスター)
+  # ===============================================================
+  MASTER:
+    COLOR: LIGHT_PURPLE
+    MATERIAL: AMETHYST_SHARD
+    walk:
+      - particle: DUST
+        redstone:
+          color: "#9900FF"
+          size: 0.9
+      - particle: WITCH
+        chance: 0.15
+    idle:
+      - particle: DUST
+        redstone:
+          color: "#9900FF"
+          size: 0.9
+      - particle: DRIPPING_OBSIDIAN_TEAR
+        chance: 0.03
+
+  # ===============================================================
+  # DIAMOND (ダイヤモンド)
+  # ===============================================================
+  DIAMOND:
+    COLOR: AQUA
+    MATERIAL: DIAMOND
+    walk:
+      - particle: DUST
+        redstone:
+          color: "#60C2FF"
+          size: 0.9
+      - particle: ENCHANTED_HIT
+        chance: 0.15
+    idle:
+      - particle: DUST
+        redstone:
+          color: "#60C2FF"
+          size: 0.9
+      - particle: DRIPPING_WATER
+        chance: 0.03

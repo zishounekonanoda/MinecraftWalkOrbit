@@ -1,0 +1,17 @@
+name: WalkOrbit
+main: org.neko.walkorbit.WalkOrbit
+version: 1.0.0
+api-version: '1.21'
+description: 'Apex-style orbit trails for walking: hip-side particle lines while moving, a dripping spiral while standing still.'
+commands:
+  walkorbit:
+    description: Open the Walk Orbit menu, or manage orbits and reload config.
+    usage: /walkorbit <menu|set|clear|reload>
+    aliases: [worbit]
+permissions:
+  walkorbit.admin:
+    description: Allows /walkorbit set, clear and reload.
+    default: op
+  walkorbit.menu:
+    description: Allows opening the Walk Orbit selection GUI.
+    default: true

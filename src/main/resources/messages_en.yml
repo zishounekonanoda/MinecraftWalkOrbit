@@ -1,0 +1,28 @@
+# WalkOrbit English Language File
+
+# GUI Titles
+gui.title.main: "&1Select a Walk Orbit &8(Page {page}/{totalPages})"
+gui.title.lang: "&1Select a Language"
+
+# GUI Items
+gui.item.trail.name: "{color}{trail} Walk Orbit"
+gui.item.trail.lore: "&7Click to activate this orbit."
+gui.item.remove_trail.name: "&cRemove Walk Orbit"
+gui.item.nav.next: "&eNext Page >>"
+gui.item.nav.prev: "&e<< Previous Page"
+gui.item.lang.name: "&aLanguage / 言語"
+gui.item.lang.en: "&f&lEnglish"
+gui.item.lang.ja: "&f&l日本語 (Japanese)"
+
+# Command Feedback
+command.reloaded: "&aConfig and messages reloaded."
+command.no_permission: "&cYou don't have permission."
+command.player_only: "&cThis command can only be run by a player."
+command.usage: "&cUsage: /walkorbit <menu|set <player> <group>|clear <player>|reload>"
+command.player_not_found: "&cPlayer not found: {player}"
+command.group_not_found: "&cGroup not found in config: {group}"
+command.set: "&aSet {player}'s walk orbit to {group}."
+command.cleared: "&aRemoved {player}'s walk orbit."
+command.trail_set: "&aWalk orbit set to: {trail}"
+command.trail_removed: "&aYour walk orbit has been removed."
+command.lang_set: "&aLanguage set to English."
