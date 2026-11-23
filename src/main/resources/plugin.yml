@@ -1,7 +1,8 @@
 name: WalkOrbit
 main: org.neko.walkorbit.WalkOrbit
-version: 1.8.0
+version: 1.9.0
 api-version: '1.21'
+softdepend: [ViaVersion]
 description: 'Apex-style orbit trails for walking: hip-side particle lines while moving, a dripping spiral while standing still.'
 commands:
   walkorbit:

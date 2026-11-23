@@ -33,6 +33,7 @@ public final class GuiManager {
     static final String ACTION_STYLE_PREFIX = "style:";
     static final String STYLE_DEFAULT = "DEFAULT";
     static final String ACTION_CREATE = "create";
+    static final String ACTION_DIALOG_TOGGLE = "dialog_toggle";
 
     private GuiManager() {
     }
@@ -89,9 +90,18 @@ public final class GuiManager {
 
     /** Lets each player choose how their walk particles are laid out. */
     public static void openStyle(Player player, WalkOrbit plugin) {
+        openStyle(player, plugin, false);
+    }
+
+    /**
+     * Settings screen. Row 1: walk style. Row 2: whether menus open as dialogs.
+     *
+     * @param dialogChanged true right after the dialog setting was switched, to say so on the item
+     */
+    public static void openStyle(Player player, WalkOrbit plugin, boolean dialogChanged) {
         LocaleManager lm = plugin.getLocaleManager();
         MenuHolder holder = new MenuHolder(MenuHolder.Type.STYLE, 0);
-        Inventory inv = Bukkit.createInventory(holder, 9, lm.getString("gui.title.style", player));
+        Inventory inv = Bukkit.createInventory(holder, 18, lm.getString("gui.title.style", player));
         holder.setInventory(inv);
 
         WalkShape.Style current = plugin.getWalkStyle(player);
@@ -126,6 +136,17 @@ public final class GuiManager {
         inv.setItem(7, def);
 
         inv.setItem(0, actionItem(plugin, Material.ARROW, lm.getString("gui.item.back", player), ACTION_BACK));
+
+        // Row 2: dialog on/off, with its state and (right after a change) a note that it applies next time
+        boolean on = plugin.getMenus().isDialogEnabled(player);
+        List<String> dlgLore = new ArrayList<>();
+        dlgLore.add(lm.getString("gui.item.dialog.state", player) + lm.getString(on ? "gui.item.dialog.on" : "gui.item.dialog.off", player));
+        dlgLore.add(lm.getString("gui.item.dialog.lore", player));
+        if (dialogChanged) dlgLore.add(lm.getString("gui.item.dialog.changed", player));
+        ItemStack dlg = actionItem(plugin, on ? Material.LIME_DYE : Material.GRAY_DYE,
+                lm.getString("gui.item.dialog.name", player), ACTION_DIALOG_TOGGLE, dlgLore);
+        if (dialogChanged) glow(dlg);
+        inv.setItem(13, dlg);
         player.openInventory(inv);
     }
 

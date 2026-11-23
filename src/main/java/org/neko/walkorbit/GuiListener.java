@@ -65,6 +65,10 @@ public class GuiListener implements Listener {
 
         switch (action) {
             case GuiManager.ACTION_STYLE_MENU -> GuiManager.openStyle(player, plugin);
+            case GuiManager.ACTION_DIALOG_TOGGLE -> {
+                plugin.getMenus().setDialogEnabled(player, !plugin.getMenus().isDialogEnabled(player));
+                GuiManager.openStyle(player, plugin, true); // show the new state at once
+            }
             case GuiManager.ACTION_CREATE -> plugin.getBuilder().open(player);
             case GuiManager.ACTION_BACK -> GuiManager.openMain(player, plugin, 0);
             case GuiManager.ACTION_PREV -> GuiManager.openMain(player, plugin, holder.page() - 1);

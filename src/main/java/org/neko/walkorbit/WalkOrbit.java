@@ -17,6 +17,7 @@ public final class WalkOrbit extends JavaPlugin {
     private NamespacedKey styleKey;
     private CustomOrbitStore customStore;
     private OrbitBuilder builder;
+    private org.neko.walkorbit.menu.MenuService menus;
 
     @Override
     public void onEnable() {
@@ -33,6 +34,8 @@ public final class WalkOrbit extends JavaPlugin {
         orbitTask.runTaskTimer(this, 1L, 1L);
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
+        menus = new org.neko.walkorbit.menu.MenuService(this);
+        getServer().getPluginManager().registerEvents(menus, this);
 
         PluginCommand cmd = getCommand("walkorbit");
         if (cmd != null) {
@@ -66,6 +69,10 @@ public final class WalkOrbit extends JavaPlugin {
 
     public CustomOrbitStore getCustomStore() {
         return customStore;
+    }
+
+    public org.neko.walkorbit.menu.MenuService getMenus() {
+        return menus;
     }
 
     public OrbitBuilder getBuilder() {
